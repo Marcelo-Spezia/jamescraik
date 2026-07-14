@@ -1,0 +1,7 @@
+# Invalid ICP — missing meta section entirely
+segments:
+  - id: core
+    name: "Missing meta"
+    weight: 1.0
+    account_criteria: []
+    contact_criteria: []

@@ -1,0 +1,8 @@
+# Dependencias para correr la UI en Streamlit Community Cloud.
+# (Para desarrollo local usá  pip install -e ".[ui]"  desde pyproject.toml.)
+# Versiones fijadas con >=7 días publicadas (política de dependencias).
+streamlit>=1.58,<2
+pydantic>=2.7,<3
+pyyaml>=6.0,<7
+httpx>=0.28,<1
+anthropic>=0.109.1,<0.110

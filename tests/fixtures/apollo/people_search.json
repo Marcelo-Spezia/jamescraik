@@ -1,0 +1,66 @@
+{
+  "people": [
+    {
+      "id": "ppl_1",
+      "first_name": "Dana",
+      "last_name": "Cruz",
+      "name": "Dana Cruz",
+      "title": "VP of Engineering",
+      "seniority": "vp",
+      "departments": ["engineering"],
+      "email": "dana@esquire.example",
+      "linkedin_url": "https://linkedin.com/in/danacruz",
+      "country": "United States",
+      "organization": {
+        "id": "org_1",
+        "name": "Esquire Legal Services",
+        "primary_domain": "esquire.example",
+        "website_url": "https://esquire.example",
+        "industry": "information technology & services",
+        "estimated_num_employees": 900,
+        "founded_year": 2015,
+        "technology_names": ["Amazon AWS", "React", "Python"],
+        "country": "United States",
+        "annual_revenue": 50000000,
+        "latest_funding_stage": "Series B"
+      }
+    },
+    {
+      "id": "ppl_2",
+      "name": "Pat Nolan",
+      "title": "Director of Operations",
+      "seniority": "director",
+      "departments": ["operations"],
+      "country": "United States",
+      "organization": {
+        "id": "org_2",
+        "name": "Heritage Insurance Brokers",
+        "primary_domain": "heritage.example",
+        "industry": "insurance",
+        "estimated_num_employees": 800,
+        "founded_year": 1990,
+        "technology_names": [],
+        "country": "United States",
+        "latest_funding_stage": null
+      }
+    },
+    {
+      "id": "ppl_3",
+      "name": "Pat Doe",
+      "title": "Director of IT",
+      "seniority": "director",
+      "departments": ["information_technology"],
+      "country": "United States",
+      "organization": {
+        "id": "org_3",
+        "name": "Federal Agency X",
+        "primary_domain": "agency-x.gov",
+        "industry": "government administration",
+        "estimated_num_employees": 5000,
+        "country": "United States",
+        "technology_names": ["Microsoft Azure"]
+      }
+    }
+  ],
+  "pagination": {"page": 1, "per_page": 25, "total_entries": 3}
+}

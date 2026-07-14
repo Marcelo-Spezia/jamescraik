@@ -1,0 +1,8 @@
+"""Shared pytest fixtures for the ICP Engine test suite."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+FIXTURES_DIR = Path(__file__).parent / "fixtures"
+ICP_FIXTURES_DIR = FIXTURES_DIR / "icps"

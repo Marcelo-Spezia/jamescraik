@@ -1,0 +1,66 @@
+# Valid ICP with fuzzy criteria enabled — for testing LLM step
+meta:
+  id: test-fuzzy
+  name: "Test Fuzzy ICP"
+  version: "1.0.0"
+  status: draft
+  created: 2026-06-18
+  updated: 2026-06-18
+  author: test
+  changelog:
+    - version: "1.0.0"
+      date: 2026-06-18
+      note: "Test version with fuzzy criteria."
+
+segments:
+  - id: core
+    name: "Core segment"
+    weight: 1.0
+
+    account_criteria:
+      - field: industry
+        op: in
+        value: [software, fintech]
+        weight: 50
+        kind: scored
+      - field: region
+        op: in
+        value: [NA]
+        weight: 50
+        kind: scored
+
+    contact_criteria:
+      - field: seniority
+        op: in
+        value: [c_level, vp, director]
+        weight: 100
+        kind: scored
+
+    fuzzy_criteria:
+      - id: digital_maturity
+        prompt: "Does the company show signals of digital maturity / investment in tech product?"
+        weight: 20
+        applies_to: account
+
+    knockouts:
+      - field: employee_count
+        op: gte
+        value: 50
+        reason: "Too small."
+
+    disqualifiers: []
+    intent_boost: []
+
+scoring:
+  account_weight: 0.6
+  contact_weight: 0.4
+  intent_max_boost: 20
+  tiers:
+    - tier: A
+      min: 80
+    - tier: B
+      min: 60
+    - tier: C
+      min: 40
+  fuzzy:
+    enabled: true

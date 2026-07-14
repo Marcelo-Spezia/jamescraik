@@ -1,0 +1,28 @@
+# Invalid ICP — scoring weights don't sum to 1.0
+meta:
+  id: test-bad-weights
+  name: "Bad weights"
+  version: "1.0.0"
+  status: draft
+  created: 2026-06-18
+  updated: 2026-06-18
+  author: test
+  changelog:
+    - version: "1.0.0"
+      date: 2026-06-18
+      note: "Bad weights for testing."
+
+segments:
+  - id: core
+    name: "Core"
+    weight: 1.0
+    account_criteria: []
+    contact_criteria: []
+
+scoring:
+  account_weight: 0.8
+  contact_weight: 0.8
+  intent_max_boost: 20
+  tiers:
+    - tier: A
+      min: 80

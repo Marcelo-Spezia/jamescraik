@@ -1,0 +1,10 @@
+# Taxonomía controlada: seniority (nivel de seniority del contacto)
+# Spec §4.2: c_level | vp | director | manager | ic | unknown
+
+values:
+  - c_level
+  - vp
+  - director
+  - manager
+  - ic
+  - unknown

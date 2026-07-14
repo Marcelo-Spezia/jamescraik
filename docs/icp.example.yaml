@@ -1,0 +1,124 @@
+# =============================================================
+# ICP Engine — TEMPLATE de ejemplo (NO es el ICP v1 real)
+# Materializa el schema definido en docs/icp-engine-spec.md (§5).
+# Valores = placeholders ilustrativos. El ICP v1 real se define
+# con la skill icp-architect y se guarda en /icp/<slug>.yaml
+# =============================================================
+
+meta:
+  id: icp-example                 # slug estable (= nombre de archivo)
+  name: "ICP de ejemplo (template)"
+  version: 0.1.0                  # semver — ver spec §9
+  status: draft                   # draft | active | retired
+  created: 2026-06-18
+  updated: 2026-06-18
+  author: marchel
+  changelog:
+    - version: 0.1.0
+      date: 2026-06-18
+      note: "Template de ejemplo para ilustrar el schema."
+
+# Uno o más segmentos. Cada segmento es autocontenido.
+segments:
+  - id: core
+    name: "Segmento core (ejemplo)"
+    weight: 1.0                   # peso relativo si hay varios segmentos
+
+    # ---- Criterios a nivel EMPRESA (campos de §4.1) ----
+    # op: eq | neq | in | not_in | gte | lte | between | contains_any
+    # kind: scored (suma weight si matchea) | knockout (must-have)
+    account_criteria:
+      - field: employee_count
+        op: between
+        value: [200, 2000]
+        weight: 25
+        kind: scored
+      - field: industry
+        op: in
+        value: [software, fintech, healthtech]   # taxonomía controlada
+        weight: 30
+        kind: scored
+      - field: region
+        op: in
+        value: [NA]
+        weight: 15
+        kind: scored
+      - field: funding_stage
+        op: in
+        value: [series_b, growth]
+        weight: 15
+        kind: scored
+      - field: tech_stack
+        op: contains_any
+        value: [salesforce, hubspot]
+        weight: 15
+        kind: scored
+    # Nota: los weights "scored" de account suman 100 (se normaliza igual).
+
+    # ---- Criterios a nivel PERSONA (campos de §4.2) ----
+    contact_criteria:
+      - field: seniority
+        op: in
+        value: [c_level, vp, director]
+        weight: 50
+        kind: scored
+      - field: department
+        op: in
+        value: [engineering, product, data]
+        weight: 50
+        kind: scored
+
+    # ---- Criterios difusos (evaluados por LLM, §6.3) ----
+    fuzzy_criteria:
+      - id: digital_maturity
+        prompt: "¿La empresa muestra señales de madurez digital / inversión en producto tech?"
+        weight: 20
+        applies_to: account       # account | contact
+      - id: build_vs_buy
+        prompt: "¿Hay señales de que construyen software in-house (no solo lo compran)?"
+        weight: 10
+        applies_to: account
+
+    # ---- Knockouts: must-have. Si NO se cumple -> disqualified ----
+    knockouts:
+      - field: employee_count
+        op: gte
+        value: 50
+        reason: "Demasiado chica: ACV no justifica el ciclo."
+
+    # ---- Disqualifiers: si MATCHEA -> disqualified ----
+    disqualifiers:
+      - field: industry
+        op: in
+        value: [government, education_k12]
+        reason: "Ciclos y compliance fuera de fit."
+      - field: country
+        op: in
+        value: [XX]               # placeholder de país excluido
+        reason: "Fuera de geografías soportadas."
+
+    # ---- Intent: señales que suman puntos al fit final ----
+    intent_boost:
+      - signal_type: funding_round
+        points: 10
+      - signal_type: leadership_change
+        points: 8
+      - signal_type: job_post_revops
+        points: 6
+
+# ---- Config de scoring (combinación, tiers, fuzzy) ----
+scoring:
+  account_weight: 0.6             # fit = 0.6*account + 0.4*contact (+ intent)
+  contact_weight: 0.4
+  intent_max_boost: 20            # tope de puntos por intent
+  tiers:
+    - tier: A
+      min: 80
+    - tier: B
+      min: 60
+    - tier: C
+      min: 40
+    # score < 40  -> tier D (no priorizar)
+  fuzzy:
+    enabled: true
+    model_hint: "modelo de juicio configurable por env; NO hardcodear proveedor"

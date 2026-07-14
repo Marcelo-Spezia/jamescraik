@@ -1,0 +1,106 @@
+meta:
+  id: pe-operating-partners---tech-value-creation
+  name: PE Operating Partners - Tech Value Creation
+  version: 0.1.1
+  status: draft
+  created: '2026-06-26'
+  updated: '2026-06-26'
+  author: ui
+  changelog:
+  - version: 0.1.0
+    date: '2026-06-26'
+    note: Creado desde el builder.
+  - version: 0.1.1
+    date: '2026-06-26'
+    note: Not Aplicable
+segments:
+- id: core
+  name: Core
+  weight: 1.0
+  account_criteria:
+  - field: employee_count
+    op: between
+    value:
+    - 10
+    - 560
+    weight: 15
+    kind: scored
+  - field: region
+    op: in
+    value:
+    - NA
+    - EMEA
+    weight: 10
+    kind: scored
+  contact_criteria:
+  - field: seniority
+    op: in
+    value:
+    - c_level
+    - vp
+    - director
+    weight: 50
+    kind: scored
+  - field: department
+    op: in
+    value:
+    - ops
+    - product
+    - engineering
+    weight: 50
+    kind: scored
+  fuzzy_criteria:
+  - id: tech_enabled
+    prompt: ¿La empresa usa software/tecnología como parte central de cómo entrega
+      su servicio (plataformas propias, apps, automatización, data), más allá de herramientas
+      de oficina genéricas?
+    weight: 60
+    applies_to: account
+  - id: business_services_fit
+    prompt: ¿Es una empresa de servicios profesionales / business services (legal,
+      financieros, seguros, logística, staffing, salud, etc.), en vez de un producto
+      puramente físico o un SaaS de consumo masivo?
+    weight: 15
+    applies_to: account
+  - id: build_intent
+    prompt: ¿Hay señales de que invierte en desarrollo de software a medida o tiene/expande
+      equipos de producto e ingeniería?
+    weight: 15
+    applies_to: account
+  knockouts:
+  - field: employee_count
+    op: gte
+    value: 50
+    reason: 'Muy chica (<50 empl.): el ACV no justifica el ciclo de venta.'
+  disqualifiers:
+  - field: industry
+    op: in
+    value:
+    - government
+    - education_k12
+    reason: 'Gobierno / educación: ciclos y compliance fuera de fit.'
+  intent_boost: []
+  sourcing:
+    industry_keywords:
+    - private equity
+    - portfolio company
+    - value creation
+    person_titles:
+    - Operating Partner
+    - Chief Digital Officer
+    - Head of Value Creation
+    - Technology Operating Partner
+    - Digital Transformation Lead
+scoring:
+  account_weight: 0.6
+  contact_weight: 0.4
+  intent_max_boost: 20
+  tiers:
+  - tier: A
+    min: 80
+  - tier: B
+    min: 65
+  - tier: C
+    min: 45
+  fuzzy:
+    enabled: true

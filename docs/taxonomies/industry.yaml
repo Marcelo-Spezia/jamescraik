@@ -1,0 +1,21 @@
+# Taxonomía controlada: industry (vertical de la empresa)
+# Fuente de verdad para normalización. Enrichment mapea valores de proveedor → estos slugs.
+# Actualizar este archivo y bumpar versión del ICP si se agrega una vertical.
+
+values:
+  - software
+  - fintech
+  - healthtech
+  - edtech
+  - ecommerce
+  - media
+  - manufacturing
+  - logistics
+  - energy
+  - real_estate
+  - telecom
+  - insurance
+  - government
+  - education_k12
+  - nonprofit
+  - other

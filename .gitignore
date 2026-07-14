@@ -1,0 +1,19 @@
+# Secretos / entorno — NUNCA commitear
+.env
+.env.local
+
+# Búsquedas guardadas: contienen datos reales de contactos (PII) — no commitear
+runs/
+
+# macOS / editor / herramientas locales
+.DS_Store
+.claude/settings.local.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/

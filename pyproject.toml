@@ -1,0 +1,61 @@
+[project]
+name = "icp-engine"
+version = "0.1.0"
+description = "Motor de calificación de leads contra un ICP versionable. POC E1."
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.7,<3",
+    "pyyaml>=6.0,<7",
+]
+
+[project.optional-dependencies]
+# El motor core NO depende de ningún proveedor LLM. El adapter real del
+# JudgeModel (Anthropic) vive detrás de este extra opcional: `pip install -e ".[anthropic]"`.
+anthropic = [
+    # 0.109.1 (2026-06-09) — última versión con >=7 días publicada al fijarla.
+    "anthropic>=0.109.1,<0.110",
+]
+# Adapter de ingestion Apollo (IngestionSource). Cliente HTTP async.
+apollo = [
+    # 0.28.1 (2024-12-06) — última estable; las 1.0.devN son pre-releases.
+    "httpx>=0.28,<1",
+]
+# UI interna (editor de ICP + armar lista) en Streamlit. Incluye apollo+anthropic
+# para que "armar lista" funcione con solo instalar este extra.
+ui = [
+    # 1.58.0 (2026-05-28) — última con >=7 días publicada al fijarla.
+    "streamlit>=1.58,<2",
+    "httpx>=0.28,<1",
+    "anthropic>=0.109.1,<0.110",
+]
+dev = [
+    "pytest>=8.0,<9",
+    "pytest-cov>=5.0,<6",
+    "ruff>=0.4,<1",
+    "anthropic>=0.109.1,<0.110",
+    "httpx>=0.28,<1",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "ui"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["src", "tests", "ui", "examples"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+# La UI Streamlit tiene strings de caption/help largas; no fragmentarlas.
+"ui/app.py" = ["E501"]
+"ui/app_legacy.py" = ["E501"]

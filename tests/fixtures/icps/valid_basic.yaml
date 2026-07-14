@@ -1,0 +1,91 @@
+# Valid basic ICP for testing (mirrors icp.example.yaml structure)
+meta:
+  id: test-basic
+  name: "Test Basic ICP"
+  version: "1.0.0"
+  status: active
+  created: 2026-06-18
+  updated: 2026-06-18
+  author: test
+  changelog:
+    - version: "1.0.0"
+      date: 2026-06-18
+      note: "Initial test version."
+
+segments:
+  - id: core
+    name: "Core segment"
+    weight: 1.0
+
+    account_criteria:
+      - field: employee_count
+        op: between
+        value: [200, 2000]
+        weight: 25
+        kind: scored
+      - field: industry
+        op: in
+        value: [software, fintech, healthtech]
+        weight: 30
+        kind: scored
+      - field: region
+        op: in
+        value: [NA]
+        weight: 15
+        kind: scored
+      - field: funding_stage
+        op: in
+        value: [series_b, growth]
+        weight: 15
+        kind: scored
+      - field: tech_stack
+        op: contains_any
+        value: [salesforce, hubspot]
+        weight: 15
+        kind: scored
+
+    contact_criteria:
+      - field: seniority
+        op: in
+        value: [c_level, vp, director]
+        weight: 50
+        kind: scored
+      - field: department
+        op: in
+        value: [engineering, product, data]
+        weight: 50
+        kind: scored
+
+    knockouts:
+      - field: employee_count
+        op: gte
+        value: 50
+        reason: "Too small: ACV doesn't justify the cycle."
+
+    disqualifiers:
+      - field: industry
+        op: in
+        value: [government, education_k12]
+        reason: "Compliance cycles out of fit."
+
+    intent_boost:
+      - signal_type: funding_round
+        points: 10
+      - signal_type: leadership_change
+        points: 8
+      - signal_type: job_post_revops
+        points: 6
+
+scoring:
+  account_weight: 0.6
+  contact_weight: 0.4
+  intent_max_boost: 20
+  tiers:
+    - tier: A
+      min: 80
+    - tier: B
+      min: 60
+    - tier: C
+      min: 40
+  fuzzy:
+    enabled: false

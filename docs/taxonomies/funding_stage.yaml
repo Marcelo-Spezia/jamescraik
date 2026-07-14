@@ -1,0 +1,12 @@
+# Taxonomía controlada: funding_stage (etapa de financiamiento)
+# Spec §4.1: seed | series_a | series_b | growth | enterprise | bootstrapped | public | unknown
+
+values:
+  - seed
+  - series_a
+  - series_b
+  - growth
+  - enterprise
+  - bootstrapped
+  - public
+  - unknown

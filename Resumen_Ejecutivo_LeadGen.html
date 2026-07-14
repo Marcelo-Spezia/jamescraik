@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resumen Ejecutivo · Lead Gen Solution — Making Sense</title>
+<style>
+  :root{
+    --navy:#0f2a4a; --navy2:#1f3864; --blue:#2e75b6; --accent:#27c2a0;
+    --ink:#1a2332; --muted:#5b6b7f; --line:#e3e9f0; --bg:#f5f7fa; --card:#ffffff;
+    --soft:#eef4fb;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px 64px}
+  /* Hero */
+  .hero{background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 55%,var(--blue) 130%);
+    color:#fff;border-radius:0 0 26px 26px;padding:40px 40px 34px;position:relative;overflow:hidden}
+  .hero:after{content:"";position:absolute;right:-80px;top:-80px;width:300px;height:300px;
+    background:radial-gradient(circle,rgba(39,194,160,.35),transparent 70%);border-radius:50%}
+  .eyebrow{text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:700;
+    color:#9fc6ef;margin-bottom:10px}
+  .hero h1{font-size:30px;line-height:1.2;font-weight:800;max-width:760px}
+  .hero .sub{margin-top:10px;font-size:15px;color:#d4e3f5;max-width:680px}
+  .meta{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+    padding:5px 12px;border-radius:30px;font-size:12.5px;font-weight:600;color:#eaf2fb}
+  /* North star band */
+  .northstar{margin:-22px auto 0;max-width:1040px;position:relative;z-index:3;padding:0 22px}
+  .ns-inner{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--accent);
+    border-radius:14px;padding:18px 22px;box-shadow:0 10px 30px rgba(15,42,74,.10);
+    display:flex;align-items:center;gap:16px}
+  .ns-inner .lbl{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--accent);white-space:nowrap}
+  .ns-inner .txt{font-size:17px;font-weight:700;color:var(--navy2)}
+  /* Sections */
+  section{margin-top:34px}
+  .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .sec-h .n{width:26px;height:26px;border-radius:8px;background:var(--soft);color:var(--blue);
+    font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .sec-h h2{font-size:19px;font-weight:800;color:var(--navy2)}
+  .lead{color:var(--muted);font-size:14.5px;margin-bottom:6px}
+  /* Cards grid */
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:1fr 1fr}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;
+    box-shadow:0 2px 8px rgba(15,42,74,.04)}
+  .card h3{font-size:14.5px;font-weight:800;color:var(--ink);margin-bottom:6px;display:flex;gap:8px;align-items:center}
+  .card p{font-size:13.3px;color:var(--muted)}
+  .ic{font-size:18px}
+  /* Problem card emphasis */
+  .prob{border-left:4px solid #e06666}
+  .prob h3{color:#b03a3a}
+  /* Scope pills */
+  .stage{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 14px;
+    text-align:center}
+  .stage .num{font-size:12px;font-weight:800;color:var(--blue)}
+  .stage .nm{font-size:13.5px;font-weight:700;margin-top:4px}
+  .stage .ds{font-size:11.8px;color:var(--muted);margin-top:4px}
+  /* Roadmap timeline */
+  .road{position:relative;margin-top:6px}
+  .rrow{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:14px 0;border-bottom:1px dashed var(--line)}
+  .rrow:last-child{border-bottom:0}
+  .rphase{font-size:12px;font-weight:800;color:#fff;background:var(--blue);border-radius:8px;
+    padding:6px 10px;height:fit-content;text-align:center}
+  .rphase.now{background:var(--accent)}
+  .rphase.next{background:var(--blue)}
+  .rphase.later{background:#7a8aa0}
+  .rphase.cross{background:var(--navy2)}
+  .rbody .t{font-size:14px;font-weight:700;color:var(--ink)}
+  .rbody .d{font-size:12.8px;color:var(--muted);margin-top:2px}
+  /* Outcomes */
+  .out{display:flex;gap:12px;align-items:flex-start}
+  .out .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);margin-top:7px;flex:none}
+  .out p{font-size:13.6px}
+  .out b{color:var(--navy2)}
+  /* principles */
+  .principle{background:var(--soft);border:1px solid #d6e6f7;border-radius:12px;padding:14px 16px}
+  .principle h3{color:var(--navy2);font-size:13.8px;font-weight:800;margin-bottom:4px}
+  .principle p{font-size:12.8px;color:#4a5a6e}
+  .foot{margin-top:40px;text-align:center;color:#9aa7b6;font-size:12px}
+  @media(max-width:760px){.g2,.g3,.g4{grid-template-columns:1fr}.rrow{grid-template-columns:1fr}
+    .hero{padding:30px 22px} .hero h1{font-size:24px}}
+  @media print{body{background:#fff}.hero{border-radius:0}.card,.ns-inner{box-shadow:none}}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="eyebrow">Resumen Ejecutivo · Iniciativa Interna</div>
+    <h1>Una solución ágil end-to-end para escalar Lead Generation sin sacrificar calidad</h1>
+    <div class="sub">Capa de orquestación con agentes de IA que automatiza el trabajo repetitivo del proceso outbound, conectando —sin atarse— las herramientas que el equipo ya usa.</div>
+    <div class="meta">
+      <span class="chip">Vertical: Lead Generation · Making Sense</span>
+      <span class="chip">Equipo: Marchel + Nicolás (SME) + IA / vibe coding</span>
+      <span class="chip">Uso interno</span>
+    </div>
+  </div>
+
+  <div class="northstar">
+    <div class="ns-inner">
+      <div class="lbl">North&nbsp;Star</div>
+      <div class="txt">Agendar más reuniones calificadas — sin sumar headcount.</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- Problema -->
+    <section>
+      <div class="sec-h"><div class="n">1</div><h2>El problema que resolvemos</h2></div>
+      <p class="lead">No es falta de herramientas: el equipo ya opera con HubSpot, Apollo, Clay, Expandi y Claude. El problema es la <b>fragmentación</b> de un proceso manual y disperso.</p>
+      <div class="grid g3" style="margin-top:6px">
+        <div class="card prob"><h3>🧩 Stack fragmentado</h3><p>Saltar entre herramientas desconectadas hace perder tiempo y contexto en cada etapa del funnel.</p></div>
+        <div class="card prob"><h3>📉 La calidad rompe al escalar</h3><p>Al subir el volumen, las listas se llenan de contactos fuera del ICP. Sales reporta que los leads no encajan.</p></div>
+        <div class="card prob"><h3>⛓️ No escala ni mejora</h3><p>El proceso depende de trabajo manual heroico; sumar volumen hoy exigiría sumar gente.</p></div>
+      </div>
+    </section>
+
+    <!-- Scope -->
+    <section>
+      <div class="sec-h"><div class="n">2</div><h2>Scope del proyecto (end-to-end)</h2></div>
+      <p class="lead">La solución cubre el ciclo completo de outbound, con foco inicial en la raíz del problema de calidad: el targeting/ICP.</p>
+      <div class="grid g4" style="margin-top:6px">
+        <div class="stage"><div class="num">01 · FOCO</div><div class="nm">ICP & Targeting</div><div class="ds">ICP riguroso + enrichment de listas de calidad</div></div>
+        <div class="stage"><div class="num">02</div><div class="nm">Outreach & Secuencias</div><div class="ds">Multicanal: email y LinkedIn, personalizado</div></div>
+        <div class="stage"><div class="num">03</div><div class="nm">Calificación & Handoff</div><div class="ds">Scoring y traspaso a sales con contexto</div></div>
+        <div class="stage"><div class="num">04</div><div class="nm">Medición & Optimización</div><div class="ds">Conversión por etapa y mejora continua</div></div>
+      </div>
+    </section>
+
+    <!-- Objetivos / lo que buscamos lograr -->
+    <section>
+      <div class="sec-h"><div class="n">3</div><h2>Lo que buscamos lograr</h2></div>
+      <div class="grid g2">
+        <div class="card">
+          <div class="out"><span class="dot"></span><p><b>Escalar volumen sin perder calidad.</b> Subir el % de leads "fit ICP" reportado por sales por encima del baseline actual.</p></div>
+          <div class="out" style="margin-top:12px"><span class="dot"></span><p><b>Más output por persona.</b> Que los agentes hagan el trabajo repetitivo y el equipo se enfoque en lo estratégico.</p></div>
+        </div>
+        <div class="card">
+          <div class="out"><span class="dot"></span><p><b>Más reuniones calificadas.</b> El resultado final que mueve la aguja del negocio, sin sumar headcount.</p></div>
+          <div class="out" style="margin-top:12px"><span class="dot"></span><p><b>Un proceso medible y repetible.</b> Visibilidad del pipeline y de qué funciona, para decidir dónde invertir.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section>
+      <div class="sec-h"><div class="n">4</div><h2>Cómo lo vamos a construir — roadmap</h2></div>
+      <p class="lead">Enfoque ágil y ligero: incrementos validables construidos con IA y vibe coding, empezando por un POC que ataca la raíz.</p>
+      <div class="card road">
+        <div class="rrow"><div class="rphase now">AHORA · 0–6 sem<br><span style="font-weight:600">POC</span></div>
+          <div class="rbody"><div class="t">E1 · ICP Engine</div><div class="d">Definir un ICP riguroso, vivo y versionable (multi-ICP) + capturar baseline de fit-rate. Mínimo y medible.</div></div></div>
+        <div class="rrow"><div class="rphase next">SIGUIENTE · 6–12 sem</div>
+          <div class="rbody"><div class="t">E2 · Automated List Builder & Enrichment</div><div class="d">Armado y enriquecimiento automático de listas aplicando el ICP, validado contra el CRM.</div></div></div>
+        <div class="rrow"><div class="rphase later">LUEGO · 3–6 meses</div>
+          <div class="rbody"><div class="t">E3 · Smart Qualification & Handoff &nbsp;·&nbsp; E4 · Outreach Orchestration</div><div class="d">Scoring + contexto para sales con loop de feedback; secuencias y personalización multicanal.</div></div></div>
+        <div class="rrow"><div class="rphase cross">TRANSVERSAL</div>
+          <div class="rbody"><div class="t">E5 · Dashboard de medición</div><div class="d">Métricas de conversión por etapa; se enciende temprano para medir el north star.</div></div></div>
+      </div>
+    </section>
+
+    <!-- Principios -->
+    <section>
+      <div class="sec-h"><div class="n">5</div><h2>Principios de diseño</h2></div>
+      <div class="grid g2">
+        <div class="principle"><h3>Agnóstico a herramientas</h3><p>Orquesta el stack que usamos hoy (HubSpot, Apollo, Clay, Expandi) pero no se ata a él: poder cambiar de proveedor sin re-arquitectura.</p></div>
+        <div class="principle"><h3>ICP vivo y versionable</h3><p>Nuestro ICP cambia en el tiempo; el artefacto incorpora y versiona nuevos ICPs a medida que se usa.</p></div>
+      </div>
+    </section>
+
+    <div class="foot">Making Sense · Vertical de Lead Generation — Documento de estrategia, junio 2026</div>
+  </div>
+</body>
+</html>

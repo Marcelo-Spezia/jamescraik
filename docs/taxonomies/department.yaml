@@ -1,0 +1,12 @@
+# Taxonomía controlada: department (área funcional del contacto)
+# Spec §4.2: engineering | product | data | ops | marketing | sales | exec | other
+
+values:
+  - engineering
+  - product
+  - data
+  - ops
+  - marketing
+  - sales
+  - exec
+  - other

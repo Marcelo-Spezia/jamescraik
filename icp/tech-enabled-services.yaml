@@ -1,0 +1,150 @@
+meta:
+  id: tech-enabled-services
+  name: Tech-enabled Business Services (Mid-market)
+  version: 0.1.2
+  status: draft
+  created: 2026-06-18
+  updated: '2026-06-19'
+  author: mspezia
+  changelog:
+  - version: 0.1.0
+    date: 2026-06-18
+    note: 'Primera definición. Foco: business services tech-enabled, mid-market, NA/LATAM,
+      decisores tech/product/founder.'
+  - version: 0.1.1
+    date: 2026-06-18
+    note: 'Rebalanceo de pesos: ''tech_enabled'' (difuso) pasa a ser el criterio dominante
+      del nivel empresa; bajan las table-stakes determinísticas. Aprovecha que los
+      difusos ahora pesan en el mismo pool (spec §6.4).'
+  - version: 0.1.2
+    date: '2026-06-19'
+    note: Sume PE backed
+segments:
+- id: core
+  name: Core — servicios profesionales tech-enabled
+  weight: 1.0
+  account_criteria:
+  - field: employee_count
+    op: between
+    value:
+    - 100
+    - 500
+    weight: 15
+    kind: scored
+  - field: region
+    op: in
+    value:
+    - NA
+    - LATAM
+    weight: 10
+    kind: scored
+  - field: tech_stack
+    op: contains_any
+    value:
+    - aws
+    - gcp
+    - azure
+    - kubernetes
+    - snowflake
+    - databricks
+    - react
+    - node
+    - python
+    - salesforce
+    - hubspot
+    - segment
+    weight: 15
+    kind: scored
+  - field: industry
+    op: in
+    value:
+    - Legal
+    weight: 0
+    kind: scored
+  contact_criteria:
+  - field: seniority
+    op: in
+    value:
+    - c_level
+    - vp
+    - director
+    weight: 50
+    kind: scored
+  - field: department
+    op: in
+    value:
+    - engineering
+    - product
+    - data
+    - exec
+    - ops
+    weight: 50
+    kind: scored
+  fuzzy_criteria:
+  - id: tech_enabled
+    prompt: '¿La empresa usa software/tecnología como parte central de cómo entrega
+      su servicio (plataformas propias, apps, automatización, data), más allá de herramientas
+      de oficina genéricas?
+
+      '
+    weight: 60
+    applies_to: account
+  - id: business_services_fit
+    prompt: '¿Es una empresa de servicios profesionales / business services (legal,
+      financieros, seguros, logística, staffing, salud, etc.), en vez de un producto
+      puramente físico o un SaaS de consumo masivo?
+
+      '
+    weight: 20
+    applies_to: account
+  - id: build_intent
+    prompt: '¿Hay señales de que invierte en desarrollo de software a medida o tiene/expande
+      equipos de producto e ingeniería?
+
+      '
+    weight: 10
+    applies_to: account
+  - id: pebacked
+    prompt: ¿Hay señales de que invierte en desarrollo de software a medida o tiene/expande
+      equipos de producto e ingeniería?
+    weight: 10
+    applies_to: account
+  knockouts:
+  - field: employee_count
+    op: gte
+    value: 50
+    reason: 'Muy chica (<50 empl.): el ACV no justifica el ciclo de venta.'
+  disqualifiers:
+  - field: industry
+    op: in
+    value:
+    - government
+    - education_k12
+    reason: 'Gobierno / educación: ciclos y compliance fuera de fit.'
+  - field: region
+    op: not_in
+    value:
+    - NA
+    - LATAM
+    reason: Fuera de las geografías que cubre el equipo (solo NA/LATAM).
+  intent_boost:
+  - signal_type: job_post_engineering
+    points: 10
+  - signal_type: leadership_change
+    points: 8
+  - signal_type: funding_round
+    points: 8
+scoring:
+  account_weight: 0.6
+  contact_weight: 0.4
+  intent_max_boost: 20
+  tiers:
+  - tier: A
+    min: 80
+  - tier: B
+    min: 65
+  - tier: C
+    min: 45
+  fuzzy:
+    enabled: true
+    model_hint: modelo de juicio configurable por env; NO hardcodear proveedor
