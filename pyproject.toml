@@ -59,3 +59,4 @@ select = ["E", "F", "I", "N", "W", "UP"]
 # La UI Streamlit tiene strings de caption/help largas; no fragmentarlas.
 "ui/app.py" = ["E501"]
 "ui/app_legacy.py" = ["E501"]
+"ui/i18n.py" = ["E501"]  # archivo de traducciones: strings largas por naturaleza

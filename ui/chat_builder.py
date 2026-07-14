@@ -97,30 +97,34 @@ def _api_messages(history: list[dict[str, str]]) -> list[dict[str, str]]:
     return msgs
 
 
-def _with_context(system: str, context: str) -> str:
+def _with_context(system: str, context: str, lang: str = "es") -> str:
+    directive = ("\n\nRespondé en español." if lang == "es"
+                 else "\n\nRespond entirely in English.")
+    system = system + directive
     if context and context.strip():
         header = "=== CONTEXTO DE MAKING SENSE (usalo para groundear y recomendar) ==="
         return f"{system}\n\n{header}\n{context}"
     return system
 
 
-def chat_reply(history: list[dict[str, str]], client: Any | None = None, context: str = "") -> str:
+def chat_reply(history: list[dict[str, str]], client: Any | None = None, context: str = "",
+               lang: str = "es") -> str:
     """Respuesta conversacional del consultor dada la historia del chat."""
     client = _client(client)
     resp = client.messages.create(
-        model=MODEL, max_tokens=1024, system=_with_context(_SYSTEM_CHAT, context),
+        model=MODEL, max_tokens=1024, system=_with_context(_SYSTEM_CHAT, context, lang),
         messages=_api_messages(history),
     )
     return next((b.text for b in resp.content if b.type == "text"), "")
 
 
 def extract_campaign(history: list[dict[str, str]], client: Any | None = None,
-                     context: str = "") -> dict[str, Any]:
+                     context: str = "", lang: str = "es") -> dict[str, Any]:
     """Extrae la campaña estructurada de la conversación."""
     client = _client(client)
     transcript = "\n\n".join(f"{m['role']}: {m['content']}" for m in history)
     resp = client.messages.create(
-        model=MODEL, max_tokens=1500, system=_with_context(_SYSTEM_EXTRACT, context),
+        model=MODEL, max_tokens=1500, system=_with_context(_SYSTEM_EXTRACT, context, lang),
         messages=[{"role": "user", "content": transcript}],
         output_config={"format": {"type": "json_schema", "schema": _EXTRACT_SCHEMA}},
     )
@@ -156,7 +160,7 @@ un patrón (ej. muchos D por un mismo motivo), señalalo y proponé el fix.
 
 def suggest_improvements(campaign: dict[str, Any], context: str = "",
                          results: list[dict[str, Any]] | None = None,
-                         client: Any | None = None) -> str:
+                         client: Any | None = None, lang: str = "es") -> str:
     """Recomendaciones proactivas para mejorar una campaña (Fase 2 del contexto)."""
     client = _client(client)
     filters = ", ".join(campaign.get("sales_nav_filters", [])) or "(ninguno)"
@@ -176,7 +180,7 @@ def suggest_improvements(campaign: dict[str, Any], context: str = "",
             parts.append("Motivos de C/D (muestra):\n" + motivos)
     user = "\n\n".join(parts) + "\n\nSugerí mejoras concretas y accionables para esta campaña."
     resp = client.messages.create(
-        model=MODEL, max_tokens=1200, system=_with_context(_SYSTEM_SUGGEST, context),
+        model=MODEL, max_tokens=1200, system=_with_context(_SYSTEM_SUGGEST, context, lang),
         messages=[{"role": "user", "content": user}],
     )
     return next((b.text for b in resp.content if b.type == "text"), "")

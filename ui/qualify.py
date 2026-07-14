@@ -199,7 +199,12 @@ _SCHEMA = {
 }
 
 
-def _system(rubric: str, value_prop: str, context: str = "") -> str:
+def _lang_directive(lang: str) -> str:
+    return ("\n\nEscribí el 'reason' en español." if lang == "es"
+            else "\n\nWrite the 'reason' in English.")
+
+
+def _system(rubric: str, value_prop: str, context: str = "", lang: str = "es") -> str:
     vp = (f"\n\nPropuesta de valor de Making Sense (para evaluar el fit):\n{value_prop}"
           if value_prop else "")
     ctx = (f"\n\nContexto de Making Sense (para juzgar el match):\n{context}"
@@ -211,14 +216,14 @@ def _system(rubric: str, value_prop: str, context: str = "") -> str:
         "industria, tamaño). Si la empresa o el rol claramente no encajan (rol equivocado, "
         "empresa de otro rubro, gobierno/educación, demasiado chica, perfil personal/ruido), "
         "es D. Devolvés tier + un 'por qué' breve y concreto.\n\n"
-        f"RÚBRICA:\n{rubric}{vp}{ctx}"
+        f"RÚBRICA:\n{rubric}{vp}{ctx}{_lang_directive(lang)}"
     )
 
 
 def qualify_lead(lead: dict[str, Any], rubric: str, value_prop: str, client: Any,
-                 context: str = "") -> dict[str, Any]:
+                 context: str = "", lang: str = "es") -> dict[str, Any]:
     resp = client.messages.create(
-        model=MODEL, max_tokens=400, system=_system(rubric, value_prop, context),
+        model=MODEL, max_tokens=400, system=_system(rubric, value_prop, context, lang),
         messages=[{"role": "user", "content": json.dumps(lead, ensure_ascii=False)}],
         output_config={"format": {"type": "json_schema", "schema": _SCHEMA}},
     )
@@ -255,7 +260,7 @@ _LEAD_FIELDS = ["name", "title", "company", "domain", "size", "industry", "locat
 
 
 def qualify_batch(batch: list[dict[str, Any]], rubric: str, value_prop: str, client: Any,
-                  context: str = "") -> list[dict[str, Any]]:
+                  context: str = "", lang: str = "es") -> list[dict[str, Any]]:
     """Califica una tanda de leads en UNA sola llamada. El system (instrucciones +
     rúbrica + contexto) va como bloque cacheable → se cuenta 1 vez por tanda y se
     lee cacheado en las siguientes (prompt caching)."""
@@ -266,7 +271,7 @@ def qualify_batch(batch: list[dict[str, Any]], rubric: str, value_prop: str, cli
     resp = client.messages.create(
         model=MODEL,
         max_tokens=max(600, 120 * len(batch)),
-        system=[{"type": "text", "text": _system(rubric, value_prop, context),
+        system=[{"type": "text", "text": _system(rubric, value_prop, context, lang),
                  "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": user}],
         output_config={"format": {"type": "json_schema", "schema": _BATCH_SCHEMA}},
@@ -283,13 +288,13 @@ def qualify_batch(batch: list[dict[str, Any]], rubric: str, value_prop: str, cli
 
 def qualify_leads(leads: list[dict[str, Any]], rubric: str, value_prop: str = "",
                   client: Any | None = None, context: str = "",
-                  batch_size: int = DEFAULT_BATCH) -> list[dict[str, Any]]:
+                  batch_size: int = DEFAULT_BATCH, lang: str = "es") -> list[dict[str, Any]]:
     if client is None:
         import anthropic
         client = anthropic.Anthropic()
     out: list[dict[str, Any]] = []
     for i in range(0, len(leads), max(batch_size, 1)):
-        out += qualify_batch(leads[i:i + batch_size], rubric, value_prop, client, context)
+        out += qualify_batch(leads[i:i + batch_size], rubric, value_prop, client, context, lang)
     order = {"A": 0, "B": 1, "C": 2, "D": 3}
     out.sort(key=lambda x: order.get(x["tier"], 9))
     return out

@@ -72,6 +72,15 @@ def catalog_labels() -> list[str]:
     return [s["label"] for s in SIGNAL_CATALOG]
 
 
+def catalog_keys() -> list[str]:
+    return [s["key"] for s in SIGNAL_CATALOG]
+
+
+def signal_from_key(key: str) -> dict[str, str] | None:
+    """Una key del catálogo → la señal completa."""
+    return dict(_CATALOG_BY_KEY[key]) if key in _CATALOG_BY_KEY else None
+
+
 def default_signals() -> list[dict[str, str]]:
     return [dict(_CATALOG_BY_KEY[k]) for k in DEFAULT_SIGNAL_KEYS if k in _CATALOG_BY_KEY]
 
@@ -225,7 +234,13 @@ def _schema(signals: list[dict[str, str]]) -> dict[str, Any]:
     }
 
 
-def _system(signals: list[dict[str, str]], value_prop: str, context: str = "") -> str:
+def _lang_directive(lang: str) -> str:
+    return ("\n\nEscribí TODOS los campos en español." if lang == "es"
+            else "\n\nWrite ALL field values in English.")
+
+
+def _system(signals: list[dict[str, str]], value_prop: str, context: str = "",
+            lang: str = "es") -> str:
     vp = f"\n\nPropuesta de valor de Making Sense:\n{value_prop}" if value_prop else ""
     ctx = (f"\n\nContexto de Making Sense (dónde gana, casos, aprendizajes):\n{context}"
            if context and context.strip() else "")
@@ -247,6 +262,7 @@ def _system(signals: list[dict[str, str]], value_prop: str, context: str = "") -
         "hipótesis, marcalas como tales.\n\n"
         f"CAMPOS A DEVOLVER:\n{fields}\n\n"
         f"Devolvé exactamente un resultado por lead, con su mismo 'index'.{vp}{ctx}"
+        f"{_lang_directive(lang)}"
     )
 
 
@@ -262,7 +278,7 @@ def _budget(keys: list[str], batch: list) -> int:
 
 def _call_batch(batch: list[dict[str, Any]], value_prop: str, context: str,
                 client: Any, signals_map: dict[str, dict],
-                signals: list[dict[str, str]]) -> list[dict[str, Any]]:
+                signals: list[dict[str, str]], lang: str = "es") -> list[dict[str, Any]]:
     """UNA llamada + parseo. Lanza json.JSONDecodeError si la salida vino truncada."""
     keys = [s["key"] for s in signals]
     items = []
@@ -276,7 +292,7 @@ def _call_batch(batch: list[dict[str, Any]], value_prop: str, context: str,
     resp = client.messages.create(
         model=MODEL,
         max_tokens=_budget(keys, batch),
-        system=[{"type": "text", "text": _system(signals, value_prop, context),
+        system=[{"type": "text", "text": _system(signals, value_prop, context, lang),
                  "cache_control": {"type": "ephemeral"}}],
         messages=[{"role": "user", "content": user}],
         output_config={"format": {"type": "json_schema", "schema": _schema(signals)}},
@@ -293,21 +309,21 @@ def _call_batch(batch: list[dict[str, Any]], value_prop: str, context: str,
 
 def enrich_batch(batch: list[dict[str, Any]], value_prop: str, context: str,
                  client: Any, signals_map: dict[str, dict],
-                 signals: list[dict[str, str]]) -> list[dict[str, Any]]:
+                 signals: list[dict[str, str]], lang: str = "es") -> list[dict[str, Any]]:
     """Enriquece una tanda. Si la salida se trunca (JSON incompleto), parte la tanda en
     dos y reintenta — así una tanda grande no tumba todo el proceso. Un lead que aun
     solo sigue fallando queda con los insights vacíos (no se pierde el lead)."""
     if not batch:
         return []
     try:
-        return _call_batch(batch, value_prop, context, client, signals_map, signals)
+        return _call_batch(batch, value_prop, context, client, signals_map, signals, lang)
     except json.JSONDecodeError:
         if len(batch) == 1:
             keys = [s["key"] for s in signals]
             return [{**batch[0], **{k: "" for k in keys}}]
         mid = len(batch) // 2
-        return (enrich_batch(batch[:mid], value_prop, context, client, signals_map, signals)
-                + enrich_batch(batch[mid:], value_prop, context, client, signals_map, signals))
+        args = (value_prop, context, client, signals_map, signals, lang)
+        return enrich_batch(batch[:mid], *args) + enrich_batch(batch[mid:], *args)
 
 
 DEFAULT_BATCH = int(os.getenv("ICP_ENRICH_BATCH", "5"))
@@ -316,7 +332,7 @@ DEFAULT_BATCH = int(os.getenv("ICP_ENRICH_BATCH", "5"))
 def enrich_leads(leads: list[dict[str, Any]], value_prop: str = "", context: str = "",
                  client: Any | None = None, source: Any | None = None,
                  signals: list[dict[str, str]] | None = None,
-                 batch_size: int = DEFAULT_BATCH) -> list[dict[str, Any]]:
+                 batch_size: int = DEFAULT_BATCH, lang: str = "es") -> list[dict[str, Any]]:
     """Enriquece una lista de leads (idealmente A/B) con las señales elegidas + el núcleo.
 
     OJO: cada empresa única consume 1 crédito de Apollo; cada tanda, 1 llamada a Claude.
@@ -331,5 +347,5 @@ def enrich_leads(leads: list[dict[str, Any]], value_prop: str = "", context: str
     out: list[dict[str, Any]] = []
     for i in range(0, len(leads), max(batch_size, 1)):
         out += enrich_batch(leads[i:i + batch_size], value_prop, context,
-                            client, signals_map, active)
+                            client, signals_map, active, lang)
     return out

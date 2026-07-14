@@ -1,12 +1,7 @@
 """Calificador de leads — app interna (Streamlit), approach redefinido.
 
-Dos vistas:
-- 🧭 Definir campaña: chat multi-turno con Claude → filtros Sales Nav + rúbrica +
-  propuesta de valor, guardado como campaña reutilizable.
-- 🎯 Calificar: subís el CSV de Sales Navigator, elegís una campaña (o escribís la
-  rúbrica), la IA califica en tiers A/B/C/D con el por qué, filtrás y exportás CSV.
-
-(La búsqueda en Apollo y el ICP de criterios/pesos quedaron en app_legacy.py.)
+Tres vistas: 🧭 Definir campaña (chat), 🎯 Calificar (CSV → tiers + enrichment), 🏢 Contexto.
+UI bilingüe (ES/EN) vía ui/i18n.py; el idioma vive en session_state['lang'].
 
 Correr:  streamlit run ui/app.py   (requiere  pip install -e ".[ui]")
 """
@@ -29,6 +24,7 @@ import campaigns  # noqa: E402
 import chat_builder  # noqa: E402
 import context as ms_context  # noqa: E402
 import enrich  # noqa: E402
+import i18n  # noqa: E402
 import qualify  # noqa: E402
 
 try:
@@ -49,21 +45,26 @@ def _load_dotenv() -> None:
             os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
-DEFAULT_VP = ("Making Sense desarrolla software a medida y producto digital "
-              "para empresas tech-enabled.")
-DEFAULT_RUBRIC = """\
-Describí a quién buscás y qué hace a un lead A / B / C / D. Ejemplo:
-- A: CFO / Director Financiero de fintech o empresa de software / tech-enabled, mid-market (50-2000), AR/LATAM.
-- B: Finanzas en una empresa de servicios profesionales con algo de tecnología.
-- C: Empresa tradicional / no-tech, o tamaño / geografía dudosos.
-- D: No fit — rol equivocado, gobierno / educación, otro rubro, o perfil de ruido."""
 TIER_COLOR = {"A": "#16a34a", "B": "#2563eb", "C": "#d97706", "D": "#9ca3af"}
-
-# Etiquetas de las señales de enrichment (para mostrar) + qué keys NO son insights.
-SIGNAL_LABELS = {s["key"]: s["label"]
-                 for s in (enrich.SIGNAL_CATALOG + enrich.CORE_SIGNALS)}
 _BASE_LEAD_KEYS = {"tier", "name", "title", "company", "domain", "size", "industry",
                    "location", "email", "linkedin", "reason"}
+
+
+def _lang() -> str:
+    return st.session_state.get("lang", "es")
+
+
+def L(key: str, **kw) -> str:  # noqa: N802 - atajo corto y muy usado en la UI
+    """Atajo de traducción con el idioma actual."""
+    return i18n.t(key, _lang(), **kw)
+
+
+def _signal_label(key: str) -> str:
+    """Etiqueta localizada de una señal; fallback a un humanizado del slug."""
+    entry = i18n.T.get(f"signal_{key}")
+    if entry:
+        return L(f"signal_{key}")
+    return key.replace("_", " ").capitalize()
 
 
 def _insight_keys(lead: dict) -> list[str]:
@@ -78,20 +79,21 @@ def _require_auth() -> None:
     expected = os.getenv("APP_PASSWORD", "")
     if not expected or st.session_state.get("auth_ok"):
         return
-    st.title("🔒 Calificador de leads")
-    st.caption("Ingresá la contraseña para continuar.")
-    pw = st.text_input("Contraseña", type="password")
+    st.title("🔒 " + L("app_title").split(" ", 1)[-1])
+    st.caption(L("auth_caption"))
+    pw = st.text_input(L("auth_password"), type="password")
     if pw:
         if hmac.compare_digest(pw, expected):
             st.session_state["auth_ok"] = True
             st.rerun()
         else:
-            st.error("Contraseña incorrecta.")
+            st.error(L("auth_wrong"))
     st.stop()
 
 
-st.set_page_config(page_title="Calificador de leads", page_icon="🎯", layout="centered")
+st.set_page_config(page_title=i18n.t("page_title"), page_icon="🎯", layout="centered")
 _load_dotenv()
+st.session_state.setdefault("lang", os.getenv("APP_DEFAULT_LANG", "es"))
 _require_auth()
 st.session_state.setdefault("view", "qualify")
 HAS_CLAUDE = bool(os.getenv("ANTHROPIC_API_KEY"))
@@ -101,29 +103,30 @@ HAS_CLAUDE = bool(os.getenv("ANTHROPIC_API_KEY"))
 # Vista: Definir campaña (chat multi-turno)
 # ==========================================================================
 def render_chat() -> None:
-    st.title("🧭 Definir campaña")
-    st.caption("Charlá con la IA sobre tu campaña. Te ayuda a iterar los filtros de "
-               "Sales Navigator, la rúbrica de calificación y la propuesta de valor.")
+    lang = _lang()
+    st.title(L("chat_title"))
+    st.caption(L("chat_caption"))
     if not HAS_CLAUDE:
-        st.warning("Falta ANTHROPIC_API_KEY.")
+        st.warning(L("missing_key"))
 
+    intro = i18n.t("chat_intro", lang)
     if "chat" not in st.session_state:
-        st.session_state["chat"] = [{"role": "assistant", "content": chat_builder.INTRO}]
-    if st.button("🗑️ Empezar de nuevo"):
-        st.session_state["chat"] = [{"role": "assistant", "content": chat_builder.INTRO}]
+        st.session_state["chat"] = [{"role": "assistant", "content": intro}]
+    if st.button(L("chat_restart")):
+        st.session_state["chat"] = [{"role": "assistant", "content": intro}]
         st.session_state.pop("draft_campaign", None)
         st.rerun()
 
     for m in st.session_state["chat"]:
         st.chat_message(m["role"]).write(m["content"])
 
-    if prompt := st.chat_input("Contale sobre tu campaña…", disabled=not HAS_CLAUDE):
+    if prompt := st.chat_input(L("chat_input_ph"), disabled=not HAS_CLAUDE):
         st.session_state["chat"].append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
-        with st.chat_message("assistant"), st.spinner("Pensando…"):
+        with st.chat_message("assistant"), st.spinner(L("chat_thinking")):
             try:
                 reply = chat_builder.chat_reply(st.session_state["chat"],
-                                                context=ms_context.load_context())
+                                                context=ms_context.load_context(), lang=lang)
             except Exception as exc:  # noqa: BLE001
                 reply = f"Error: {exc}"
             st.write(reply)
@@ -131,37 +134,36 @@ def render_chat() -> None:
 
     # Generar la campaña estructurada desde la charla
     if len([m for m in st.session_state["chat"] if m["role"] == "user"]) >= 1:
-        if st.button("✨ Generar campaña desde la charla", type="primary", disabled=not HAS_CLAUDE):
-            with st.spinner("Armando la campaña…"):
+        if st.button(L("chat_generate"), type="primary", disabled=not HAS_CLAUDE):
+            with st.spinner(L("chat_building")):
                 try:
                     st.session_state["draft_campaign"] = chat_builder.extract_campaign(
-                        st.session_state["chat"], context=ms_context.load_context())
+                        st.session_state["chat"], context=ms_context.load_context(), lang=lang)
                 except Exception as exc:  # noqa: BLE001
-                    st.error(f"No se pudo generar:\n\n{exc}")
+                    st.error(L("gen_error", err=exc))
 
     draft = st.session_state.get("draft_campaign")
     if draft:
         st.divider()
-        st.subheader("Campaña propuesta — revisá y guardá")
-        draft["name"] = st.text_input("Nombre", value=draft.get("name", ""))
+        st.subheader(L("draft_header"))
+        draft["name"] = st.text_input(L("f_name"), value=draft.get("name", ""))
         draft["sales_nav_filters"] = [
             f.strip() for f in st.text_area(
-                "Filtros para Sales Navigator (uno por línea)",
+                L("f_filters"),
                 value="\n".join(draft.get("sales_nav_filters", [])), height=120).splitlines()
             if f.strip()]
-        draft["rubric"] = st.text_area("Rúbrica (A/B/C/D)", value=draft.get("rubric", ""), height=180)
-        draft["value_prop"] = st.text_area("Propuesta de valor", value=draft.get("value_prop", ""),
+        draft["rubric"] = st.text_area(L("f_rubric_abcd"), value=draft.get("rubric", ""), height=180)
+        draft["value_prop"] = st.text_area(L("f_value_prop"), value=draft.get("value_prop", ""),
                                            height=70)
-        st.caption("✨ Señales de enrichment que Claude sugiere para esta campaña "
-                   "(una por línea — `etiqueta: qué averiguar`). Editá libremente.")
+        st.caption(L("signals_hint"))
         draft["enrichment_signals"] = enrich.resolve_signals(enrich.parse_custom_signals(
-            st.text_area("Señales de enrichment",
+            st.text_area(L("f_signals"),
                          value="\n".join(f"{s['label']}: {s['question']}"
                                          for s in draft.get("enrichment_signals", [])),
                          height=120, label_visibility="collapsed")))
-        if st.button("💾 Guardar campaña", type="primary"):
+        if st.button(L("save_campaign"), type="primary"):
             slug = campaigns.save_campaign(draft)
-            st.success(f"Campaña guardada: **{draft['name']}**. Ya podés usarla en 🎯 Calificar.")
+            st.success(L("campaign_saved", name=draft["name"]))
             st.session_state["loaded_campaign"] = slug
 
 
@@ -169,132 +171,127 @@ def render_chat() -> None:
 # Vista: Calificar
 # ==========================================================================
 def render_qualify() -> None:
-    st.title("🎯 Calificar leads")
-    st.caption("Subí tu lista de Sales Navigator, elegí una campaña (o escribí la rúbrica), "
-               "y la IA califica en tiers A/B/C/D con el por qué. Después filtrás y exportás.")
+    lang = _lang()
+    st.title(L("qualify_title"))
+    st.caption(L("qualify_caption"))
 
     # 1. Campaña / rúbrica
-    st.subheader("1. Campaña")
+    st.subheader(L("sec_campaign"))
     camps = campaigns.list_campaigns()
-    rubric_default, vp_default, name_default = DEFAULT_RUBRIC, DEFAULT_VP, ""
+    rubric_default = i18n.t("default_rubric", lang)
+    vp_default, name_default = i18n.t("default_vp", lang), ""
     loaded_filters: list[str] = []
     loaded_signals: list[dict] = []
     if camps:
-        options = ["(escribir manualmente)"] + [c["name"] for c in camps]
+        options = [L("manual_option")] + [c["name"] for c in camps]
         idx = 0
         loaded = st.session_state.get("loaded_campaign")
         if loaded:
             slugs = [c["slug"] for c in camps]
             if loaded in slugs:
                 idx = slugs.index(loaded) + 1
-        choice = st.selectbox("Usar campaña guardada", options, index=idx)
-        if choice != "(escribir manualmente)":
+        choice = st.selectbox(L("use_saved"), options, index=idx)
+        if choice != L("manual_option"):
             c = next(c for c in camps if c["name"] == choice)
             rubric_default, vp_default, name_default = c["rubric"], c["value_prop"], c["name"]
             loaded_filters = c.get("sales_nav_filters", [])
             loaded_signals = c.get("enrichment_signals", [])
             if loaded_filters:
-                st.info("**Filtros sugeridos para Sales Navigator:**\n\n- "
-                        + "\n- ".join(loaded_filters))
+                st.info(L("filters_suggested") + "\n\n- " + "\n- ".join(loaded_filters))
     else:
-        st.caption("Tip: podés definir campañas con el chat en 🧭 Definir campaña.")
+        st.caption(L("tip_campaign"))
 
-    name = st.text_input("Nombre de la campaña", value=name_default,
-                         placeholder="Ej: CFOs fintech Argentina")
-    rubric = st.text_area("Rúbrica — qué hace a un lead A / B / C / D", value=rubric_default,
-                          height=180)
-    value_prop = st.text_area("Propuesta de valor (para evaluar el fit)", value=vp_default,
-                              height=68)
+    name = st.text_input(L("campaign_name"), value=name_default,
+                         placeholder=L("campaign_name_ph"))
+    rubric = st.text_area(L("rubric_label"), value=rubric_default, height=180)
+    value_prop = st.text_area(L("value_prop_label"), value=vp_default, height=68)
 
-    if st.button("💡 Sugerí mejoras a esta campaña", disabled=not (HAS_CLAUDE and rubric.strip())):
+    if st.button(L("suggest_btn"), disabled=not (HAS_CLAUDE and rubric.strip())):
         camp = {"name": name, "rubric": rubric, "value_prop": value_prop,
                 "sales_nav_filters": loaded_filters}
-        with st.spinner("Analizando la campaña contra el contexto de Making Sense…"):
+        with st.spinner(L("suggest_spinner")):
             try:
                 st.session_state["suggestions"] = chat_builder.suggest_improvements(
                     camp, context=ms_context.load_context(),
-                    results=st.session_state.get("results"))
+                    results=st.session_state.get("results"), lang=lang)
             except Exception as exc:  # noqa: BLE001
                 st.session_state["suggestions"] = f"Error: {exc}"
     if st.session_state.get("suggestions"):
-        with st.expander("💡 Recomendaciones para mejorar la campaña", expanded=True):
+        with st.expander(L("suggest_expander"), expanded=True):
             st.markdown(st.session_state["suggestions"])
-            if st.button("Ocultar"):
+            if st.button(L("hide")):
                 st.session_state.pop("suggestions", None)
                 st.rerun()
 
     # 2. Lista
-    st.subheader("2. Tu lista")
-    up = st.file_uploader("Subí un CSV (Sales Navigator, Apollo, Clay, export propio…)",
-                          type=["csv"])
+    st.subheader(L("sec_list"))
+    up = st.file_uploader(L("uploader_label"), type=["csv"])
     leads: list[dict] = []
     if up is not None:
         headers, rows = qualify.read_csv(up.getvalue().decode("utf-8", errors="replace"))
         if not headers:
-            st.error("No pude leer columnas del CSV. ¿Está separado por comas y con encabezados?")
+            st.error(L("csv_read_error"))
         else:
             auto = qualify.detect_mapping(headers)
-            with st.expander("🔗 Columnas detectadas — revisá y corregí",
-                             expanded=not auto.get("company")):
-                st.caption("Asigná cada campo a una columna de tu CSV. Lo que quede en "
-                           "«(ninguno)» se ignora. Sirve para cualquier formato de lista.")
-                opts = ["(ninguno)"] + headers
+            with st.expander(L("mapping_expander"), expanded=not auto.get("company")):
+                st.caption(L("mapping_caption"))
+                opts = [L("none_option")] + headers
                 mapping: dict[str, str] = {}
                 mcols = st.columns(2)
-                for i, t in enumerate(qualify.TARGET_FIELDS):
+                for i, field in enumerate(qualify.TARGET_FIELDS):
                     with mcols[i % 2]:
-                        d = auto.get(t) or ""
-                        sel = st.selectbox(qualify.TARGET_LABELS[t], opts,
+                        d = auto.get(field) or ""
+                        sel = st.selectbox(L(f"field_{field}"), opts,
                                            index=opts.index(d) if d in opts else 0,
-                                           key=f"map_{t}")
-                        mapping[t] = "" if sel == "(ninguno)" else sel
+                                           key=f"map_{field}")
+                        mapping[field] = "" if sel == L("none_option") else sel
             leads = qualify.leads_from_rows(rows, mapping)
             if not (mapping.get("company") or mapping.get("name")):
-                st.warning("Asigná al menos **Empresa** o **Nombre** para poder calificar bien.")
-            st.success(f"✅ {len(leads)} leads leídos.")
-            with st.expander("Ver los primeros 5"):
+                st.warning(L("warn_map"))
+            st.success(L("leads_read", n=len(leads)))
+            with st.expander(L("see_first5")):
                 st.dataframe([{k: ld[k] for k in ["name", "title", "company", "domain", "size"]}
                               for ld in leads[:5]], use_container_width=True)
 
     # 3. Calificar
-    st.subheader("3. Calificar")
+    st.subheader(L("sec_qualify"))
     if not HAS_CLAUDE:
-        st.warning("Falta ANTHROPIC_API_KEY.")
+        st.warning(L("missing_key"))
     top = min(len(leads), 100)
     if top >= 2:
-        n = st.slider("¿Cuántos calificar?", 1, top, min(top, 20))
+        n = st.slider(L("how_many"), 1, top, min(top, 20))
     else:
         n = top  # 0 (sin lista aún) o 1 (un solo lead) → sin slider
         if not leads:
-            st.caption("Subí un CSV arriba para calificar.")
+            st.caption(L("upload_to_qualify"))
     if leads:
-        st.caption(f"⚠️ Califica los primeros **{n}**. Cada lead = 1 llamada a Claude.")
-    if st.button("🎯 Calificar lista", type="primary",
+        st.caption(L("qualify_cost", n=n))
+    if st.button(L("qualify_btn"), type="primary",
                  disabled=not (leads and HAS_CLAUDE and rubric.strip())):
         err = None
-        with st.spinner(f"Calificando {n} leads…"):
+        with st.spinner(L("qualify_spinner", n=n)):
             try:
                 st.session_state["results"] = qualify.qualify_leads(
-                    leads[:n], rubric, value_prop, context=ms_context.load_context())
+                    leads[:n], rubric, value_prop, context=ms_context.load_context(), lang=lang)
                 st.session_state["camp_name"] = name or "leads"
             except Exception as exc:  # noqa: BLE001
                 err = str(exc)
         if err:
-            st.error(f"No se pudo calificar:\n\n{err}")
+            st.error(L("qualify_error", err=err))
 
     # 4. Resultados + export
     res = st.session_state.get("results")
     if res:
-        st.subheader("4. Resultados")
+        st.subheader(L("sec_results"))
         counts = Counter(r["tier"] for r in res)
         cols = st.columns(4)
-        for i, t in enumerate(["A", "B", "C", "D"]):
-            cols[i].metric(f"Tier {t}", counts.get(t, 0))
-        pick = st.multiselect("Mostrar tiers", ["A", "B", "C", "D"], default=["A", "B"])
+        for i, tier in enumerate(["A", "B", "C", "D"]):
+            cols[i].metric(f"Tier {tier}", counts.get(tier, 0))
+        pick = st.multiselect(L("show_tiers"), ["A", "B", "C", "D"], default=["A", "B"])
         shown = [r for r in res if r["tier"] in pick]
         st.download_button(
-            f"⬇️ Descargar CSV ({len(shown)} leads)", qualify.leads_to_csv(shown),
-            file_name=f"{st.session_state.get('camp_name', 'leads')}_calificados.csv",
+            L("download_csv", n=len(shown)), qualify.leads_to_csv(shown),
+            file_name=f"{st.session_state.get('camp_name', 'leads')}_{L('file_suffix')}.csv",
             mime="text/csv", type="primary")
         for r in shown:
             c = TIER_COLOR.get(r["tier"], "#9ca3af")
@@ -306,55 +303,52 @@ def render_qualify() -> None:
                 st.caption(r.get("reason", ""))
                 _ins = [(k, r[k]) for k in _insight_keys(r) if r.get(k)]
                 if _ins:
-                    with st.expander("✨ Insights para el mensaje"):
+                    with st.expander(L("insights_expander")):
                         for _k, _v in _ins:
-                            _lbl = SIGNAL_LABELS.get(_k, _k.replace("_", " ").capitalize())
-                            st.markdown(f"**{_lbl}:** {_v}")
+                            st.markdown(f"**{_signal_label(_k)}:** {_v}")
 
         # 5. Enriquecer (opcional) — señales de NEGOCIO para el mensaje, configurables
-        st.subheader("5. Enriquecer (opcional)")
-        st.caption("Suma señales de **negocio** para el mensaje. Las señales varían por campaña — "
-                   "elegí del catálogo y/o pedí a medida. Enriquece 1 empresa única = 1 crédito Apollo.")
+        st.subheader(L("sec_enrich"))
+        st.caption(L("enrich_caption"))
         # Señales pre-cargadas desde la campaña (o defaults).
         base_sig = loaded_signals or [dict(s) for s in enrich.default_signals()]
-        cat_keys = {s["key"] for s in enrich.SIGNAL_CATALOG}
-        cat_default = [s["label"] for s in enrich.resolve_signals(base_sig) if s["key"] in cat_keys]
+        cat_keys = set(enrich.catalog_keys())
+        default_keys = [s["key"] for s in enrich.resolve_signals(base_sig) if s["key"] in cat_keys]
         custom_default = "\n".join(f"{s['label']}: {s['question']}"
                                    for s in enrich.resolve_signals(base_sig)
                                    if s["key"] not in cat_keys)
-        picked_cat = st.multiselect("Señales del catálogo", enrich.catalog_labels(),
-                                    default=cat_default, key="enrich_cat")
-        custom_txt = st.text_area("Señales a medida (una por línea — `etiqueta: qué averiguar`)",
-                                  value=custom_default, height=90, key="enrich_custom")
+        picked_keys = st.multiselect(L("catalog_signals"), enrich.catalog_keys(),
+                                     default=default_keys, format_func=_signal_label,
+                                     key="enrich_cat")
+        custom_txt = st.text_area(L("custom_signals"), value=custom_default, height=90,
+                                  key="enrich_custom")
         chosen = enrich.resolve_signals(
-            [enrich.signal_from_label(lbl) for lbl in picked_cat]
+            [enrich.signal_from_key(k) for k in picked_keys]
             + enrich.parse_custom_signals(custom_txt))
-        st.caption("Siempre se agregan: **Match propuesta de valor** y **Hook**. "
-                   + (f"Señales elegidas: {', '.join(s['label'] for s in chosen)}."
-                      if chosen else "Sin señales extra (solo el núcleo)."))
+        st.caption(L("core_always")
+                   + (L("signals_chosen", list=", ".join(_signal_label(s["key"]) for s in chosen))
+                      if chosen else L("signals_none")))
 
-        etiers = st.multiselect("¿Qué tiers enriquecer?", ["A", "B", "C", "D"],
+        etiers = st.multiselect(L("which_tiers"), ["A", "B", "C", "D"],
                                 default=["A", "B"], key="enrich_tiers")
         to_enrich = [r for r in res if r["tier"] in etiers]
         n_emp = len({(r.get("domain") or "").strip().lower()
                      for r in to_enrich if r.get("domain")})
-        st.caption(f"⚠️ Enriquece **{len(to_enrich)}** leads "
-                   f"(~{n_emp} empresas únicas → {n_emp} créditos de Apollo).")
-        if st.button("✨ Enriquecer seleccionados",
-                     disabled=not (to_enrich and HAS_CLAUDE)):
+        st.caption(L("enrich_cost", n=len(to_enrich), e=n_emp))
+        if st.button(L("enrich_btn"), disabled=not (to_enrich and HAS_CLAUDE)):
             err = None
-            with st.spinner(f"Enriqueciendo {len(to_enrich)} leads…"):
+            with st.spinner(L("enrich_spinner", n=len(to_enrich))):
                 try:
                     enriched = enrich.enrich_leads(
                         to_enrich, value_prop, context=ms_context.load_context(),
-                        signals=chosen)
+                        signals=chosen, lang=lang)
                     by_key = {(e.get("name"), e.get("company")): e for e in enriched}
                     st.session_state["results"] = [
                         by_key.get((r.get("name"), r.get("company")), r) for r in res]
                 except Exception as exc:  # noqa: BLE001
                     err = str(exc)
             if err:
-                st.error(f"No se pudo enriquecer:\n\n{err}")
+                st.error(L("enrich_error", err=err))
             else:
                 st.rerun()
 
@@ -363,34 +357,40 @@ def render_qualify() -> None:
 # Vista: Contexto de Making Sense
 # ==========================================================================
 def render_context() -> None:
-    st.title("🏢 Contexto de Making Sense")
-    st.caption("Mantené acá el contexto vivo de Making Sense: servicios, propuesta de valor, "
-               "diferenciadores, casos de éxito, aprendizajes y verticales foco. El agente lo usa "
-               "para groundear el chat de campaña y el match de propuesta de valor.")
+    st.title(L("context_title"))
+    st.caption(L("context_caption"))
     if not ms_context.has_saved_context():
-        st.info("Sembrado desde tu doc del proyecto. Editá y guardá para hacerlo tuyo.")
-    txt = st.text_area("Contexto (markdown)", value=ms_context.load_context(),
+        st.info(L("context_seeded"))
+    txt = st.text_area(L("context_label"), value=ms_context.load_context(),
                        height=480, key="ms_ctx")
-    if st.button("💾 Guardar contexto", type="primary"):
+    if st.button(L("save_context"), type="primary"):
         ms_context.save_context(txt)
-        st.success("Contexto guardado. El agente ya lo usa en el chat y en la calificación.")
+        st.success(L("context_saved"))
 
 
 # ==========================================================================
 # Router
 # ==========================================================================
 with st.sidebar:
-    st.markdown("### 🎯 Calificador de leads")
-    if st.button("🎯 Calificar", use_container_width=True):
+    _labels = list(i18n.LANGS.keys())
+    _codes = list(i18n.LANGS.values())
+    _sel = st.radio(L("lang_label"), _labels,
+                    index=_codes.index(_lang()) if _lang() in _codes else 0,
+                    horizontal=True)
+    if i18n.LANGS[_sel] != _lang():
+        st.session_state["lang"] = i18n.LANGS[_sel]
+        st.rerun()
+    st.markdown("### " + L("app_title"))
+    if st.button(L("nav_qualify"), use_container_width=True):
         st.session_state["view"] = "qualify"
         st.rerun()
-    if st.button("🧭 Definir campaña", use_container_width=True):
+    if st.button(L("nav_chat"), use_container_width=True):
         st.session_state["view"] = "chat"
         st.rerun()
-    if st.button("🏢 Contexto", use_container_width=True):
+    if st.button(L("nav_context"), use_container_width=True):
         st.session_state["view"] = "context"
         st.rerun()
-    st.caption("POC LeadGen · Making Sense")
+    st.caption(L("sidebar_footer"))
 
 view = st.session_state["view"]
 if view == "chat":

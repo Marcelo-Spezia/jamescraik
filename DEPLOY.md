@@ -32,9 +32,12 @@ En la app → **⋮ → Settings → Secrets**, pegá (formato TOML):
 ANTHROPIC_API_KEY = "tu-key-de-claude"
 APOLLO_API_KEY = "tu-master-key-de-apollo"
 APP_PASSWORD = "una-contraseña-que-elijas"
+APP_DEFAULT_LANG = "en"   # abre en inglés para la demo (o "es"). Igual hay selector 🌐 en la app.
 ```
 Guardá. La app las expone como variables de entorno automáticamente. Con `APP_PASSWORD`
 seteada, la app **pide contraseña** al abrir (compartísela a tu compañero aparte del link).
+La app es **bilingüe** (ES/EN): `APP_DEFAULT_LANG` define con qué idioma abre; el usuario
+puede cambiarlo con el selector 🌐 en la barra lateral.
 
 ## 4. Restringir el acceso por email (NO saltear)
 En **Settings → Sharing**: poné la app en **privada** y agregá los emails del equipo
