@@ -25,7 +25,10 @@ _LOGO = _HERE / "static" / "logo"
 def apply_theme() -> None:
     """Inyecta la hoja de estilos de la marca. Llamar una sola vez por página."""
     css = _CSS.read_text(encoding="utf-8")
-    st.markdown(f"<style>{css}</style>", unsafe_allow_html=True)
+    # Defensa: un '</style>' dentro del CSS (p.ej. en un comentario) cerraría el
+    # bloque antes de tiempo y volcaría el resto como texto en pantalla.
+    css = css.replace("</style>", "").replace("</STYLE>", "")
+    st.html(f"<style>{css}</style>")
 
 
 def logo(variant: str = "dark", width: int = 180) -> None:

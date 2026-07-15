@@ -1,7 +1,8 @@
 /* =========================================================================
    Making Sense DS — Hoja de estilos para inyectar en Streamlit
-   Uso:  st.markdown(f"<style>{open('assets/streamlit_styles.css').read()}</style>",
-                     unsafe_allow_html=True)
+   Uso:  ms_ui.apply_theme()  — la inyecta dentro de un bloque de estilos.
+   (No escribir la etiqueta de cierre de estilos en este comentario: rompería
+    la inyeccion al cerrar el bloque antes de tiempo.)
    Requiere: fuentes servidas en /app/static/fonts/  (ver README, sección 4)
    Las variables (tokens) viven en tokens.css — este archivo las re-declara
    para poder inyectarse solo, y mapea los widgets nativos de Streamlit.
