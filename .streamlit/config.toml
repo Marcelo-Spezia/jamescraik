@@ -1,0 +1,10 @@
+# Making Sense Design System — tokens base.
+# El detalle fino (fuente Red Hat Display, botones pill, gradiente) lo aplica
+# ui/ms_theme.py vía inject_ms_theme(). Acá van los tokens que Streamlit usa nativo.
+[theme]
+base = "light"
+primaryColor = "#00C6D1"              # teal de marca (acento; el CTA usa gradiente vía CSS)
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F9F9F9"  # gris-50
+textColor = "#102532"                 # navy (nunca negro puro)
+font = "sans serif"                   # Red Hat Display se fuerza en ms_theme.py

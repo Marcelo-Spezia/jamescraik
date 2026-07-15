@@ -60,3 +60,4 @@ select = ["E", "F", "I", "N", "W", "UP"]
 "ui/app.py" = ["E501"]
 "ui/app_legacy.py" = ["E501"]
 "ui/i18n.py" = ["E501"]  # archivo de traducciones: strings largas por naturaleza
+"ui/ms_theme.py" = ["E501"]  # CSS del design system: strings largas por naturaleza

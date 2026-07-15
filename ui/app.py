@@ -25,6 +25,7 @@ import chat_builder  # noqa: E402
 import context as ms_context  # noqa: E402
 import enrich  # noqa: E402
 import i18n  # noqa: E402
+import ms_theme  # noqa: E402
 import qualify  # noqa: E402
 
 try:
@@ -79,7 +80,7 @@ def _require_auth() -> None:
     expected = os.getenv("APP_PASSWORD", "")
     if not expected or st.session_state.get("auth_ok"):
         return
-    st.title("🔒 " + L("app_title").split(" ", 1)[-1])
+    st.title(L("app_title"))
     st.caption(L("auth_caption"))
     pw = st.text_input(L("auth_password"), type="password")
     if pw:
@@ -91,7 +92,8 @@ def _require_auth() -> None:
     st.stop()
 
 
-st.set_page_config(page_title=i18n.t("page_title"), page_icon="🎯", layout="centered")
+st.set_page_config(page_title=i18n.t("page_title"), layout="centered")
+ms_theme.inject_ms_theme()  # marca Making Sense — una sola vez, tras set_page_config
 _load_dotenv()
 st.session_state.setdefault("lang", os.getenv("APP_DEFAULT_LANG", "es"))
 _require_auth()
@@ -126,23 +128,23 @@ def _campaign_card(c: dict) -> None:
             st.rerun()
         return
 
-    b = st.columns([2, 1, 1, 1])
-    if b[0].button(L("card_use"), key=f"use_{slug}", type="primary", use_container_width=True):
+    if st.button(L("card_use"), key=f"use_{slug}", type="primary", use_container_width=True):
         st.session_state["loaded_campaign"] = slug
         st.session_state["view"] = "qualify"
         st.rerun()
-    if b[1].button("✏️", key=f"edit_{slug}", help=L("card_edit_help"), use_container_width=True):
+    b = st.columns(3)
+    if b[0].button(L("card_edit"), key=f"edit_{slug}", use_container_width=True):
         st.session_state["draft_campaign"] = campaigns.load_campaign(slug)
         st.session_state["view"] = "chat"
         st.rerun()
-    if b[2].button("📋", key=f"dup_{slug}", help=L("card_dup_help"), use_container_width=True):
+    if b[1].button(L("card_dup"), key=f"dup_{slug}", use_container_width=True):
         src = campaigns.load_campaign(slug)
         copy = {k: v for k, v in src.items()
                 if k not in ("slug", "created_at", "updated_at")}
         copy["name"] = f"{src.get('name', '')} {L('copy_suffix')}".strip()
         campaigns.save_campaign(copy)
         st.rerun()
-    if b[3].button("🗑️", key=f"del_{slug}", help=L("card_del_help"), use_container_width=True):
+    if b[2].button(L("card_del"), key=f"del_{slug}", use_container_width=True):
         st.session_state["confirm_delete"] = slug
         st.rerun()
 
