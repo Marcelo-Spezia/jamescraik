@@ -39,8 +39,12 @@ def logo(variant: str = "dark", width: int = 180) -> None:
         "grey":  "MakingSense-Logotype-Grey.svg",
     }[variant]
     svg = (_LOGO / name).read_text(encoding="utf-8")
+    # El SVG trae width/height fijos (553×70) que desbordan la caja; forzamos que
+    # escale al contenedor (width 100%, alto proporcional). max-width acota el tope.
+    svg = svg.replace("<svg ", '<svg style="width:100%;height:auto;display:block" ', 1)
     st.markdown(
-        f'<div style="width:{width}px">{svg}</div>', unsafe_allow_html=True
+        f'<div style="max-width:{width}px;width:100%">{svg}</div>',
+        unsafe_allow_html=True,
     )
 
 
