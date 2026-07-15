@@ -1,0 +1,122 @@
+/* =========================================================================
+   Making Sense DS — Hoja de estilos para inyectar en Streamlit
+   Uso:  st.markdown(f"<style>{open('assets/streamlit_styles.css').read()}</style>",
+                     unsafe_allow_html=True)
+   Requiere: fuentes servidas en /app/static/fonts/  (ver README, sección 4)
+   Las variables (tokens) viven en tokens.css — este archivo las re-declara
+   para poder inyectarse solo, y mapea los widgets nativos de Streamlit.
+   ========================================================================= */
+
+/* ---------- Fuentes (servidas por Streamlit static serving) ---------- */
+@font-face { font-family:"Red Hat Display"; src:url("app/static/fonts/RedHatDisplay-Light.ttf")      format("truetype"); font-weight:300; font-style:normal; font-display:swap; }
+@font-face { font-family:"Red Hat Display"; src:url("app/static/fonts/RedHatDisplay-Regular.ttf")    format("truetype"); font-weight:400; font-style:normal; font-display:swap; }
+@font-face { font-family:"Red Hat Display"; src:url("app/static/fonts/RedHatDisplay-Medium.ttf")     format("truetype"); font-weight:500; font-style:normal; font-display:swap; }
+@font-face { font-family:"Red Hat Display"; src:url("app/static/fonts/RedHatDisplay-SemiBold.ttf")   format("truetype"); font-weight:600; font-style:normal; font-display:swap; }
+@font-face { font-family:"Red Hat Display"; src:url("app/static/fonts/RedHatDisplay-Bold.ttf")       format("truetype"); font-weight:700; font-style:normal; font-display:swap; }
+@font-face { font-family:"Red Hat Display"; src:url("app/static/fonts/RedHatDisplay-ExtraBold.ttf")  format("truetype"); font-weight:800; font-style:normal; font-display:swap; }
+@font-face { font-family:"Red Hat Display"; src:url("app/static/fonts/RedHatDisplay-Black.ttf")      format("truetype"); font-weight:900; font-style:normal; font-display:swap; }
+
+:root {
+  --ms-green:#0ECC7E; --ms-green-deep:#08B368;
+  --ms-blue:#00C6D1;  --ms-blue-deep:#00A8B2;
+  --ms-dark:#102532;
+  --ms-gradient:linear-gradient(90deg,#0ECC7E 0%,#00C6D1 100%);
+  --ms-red:#FF5551; --ms-orange:#FFA143; --ms-purple:#9273F4;
+  --ms-grey-50:#F9F9F9; --ms-grey-100:#F4F4F4; --ms-grey-200:#EEEEEE;
+  --ms-grey-300:#E0E0E0; --ms-grey-500:#9E9E9E; --ms-grey-600:#757575;
+  --fg-1:#102532; --fg-2:#757575; --fg-accent:#00A8B2;
+  --border-1:#E0E0E0;
+  --radius-input:4px; --radius-card:16px; --radius-pill:999px;
+  --shadow-sm:0 2px 6px rgba(0,0,0,.08); --shadow-md:0 8px 20px rgba(0,0,0,.10);
+  --ease-out:cubic-bezier(.2,.8,.2,1); --dur-base:200ms;
+}
+
+/* ---------- Tipografía global de la app ---------- */
+html, body, [class*="css"], .stApp,
+.stMarkdown, .stTextInput, .stButton, .stSelectbox, .stDataFrame {
+  font-family:"Red Hat Display", ui-sans-serif, system-ui, sans-serif;
+}
+.stApp { background:#FFFFFF; color:var(--fg-1); }
+
+h1,[data-testid="stMarkdownContainer"] h1 { font-weight:800; letter-spacing:-.02em; color:var(--fg-1); }
+h2,[data-testid="stMarkdownContainer"] h2 { font-weight:700; letter-spacing:-.01em; color:var(--fg-1); }
+h3,[data-testid="stMarkdownContainer"] h3 { font-weight:700; letter-spacing:-.01em; color:var(--fg-1); }
+
+/* Eyebrow / label en mayúsculas */
+.ms-eyebrow { font-weight:700; font-size:.75rem; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ms-green); }
+.ms-gradient-text { background:var(--ms-gradient); -webkit-background-clip:text;
+  background-clip:text; color:transparent; -webkit-text-fill-color:transparent; }
+
+/* ---------- BOTONES ---------- */
+/* Regla de marca: SIEMPRE pill (999px), SOLO texto (sin iconos/flechas),
+   en mayúsculas con tracking 0.12em. */
+.stButton > button, .stFormSubmitButton > button, .stDownloadButton > button {
+  border-radius:var(--radius-pill) !important;
+  text-transform:uppercase; letter-spacing:.12em;
+  font-weight:700; padding:12px 26px; border:1.5px solid transparent;
+  transition:box-shadow var(--dur-base), transform var(--dur-base);
+}
+/* Secundario / ghost = default de Streamlit */
+.stButton > button:not([kind="primary"]) {
+  background:#fff; color:var(--ms-dark); border-color:var(--border-1);
+}
+.stButton > button:not([kind="primary"]):hover { background:var(--ms-grey-50); }
+
+/* Primario -> botón gradiente de marca: texto dark-blue #102532, weight 800 */
+.stButton > button[kind="primary"], .stFormSubmitButton > button {
+  background:var(--ms-gradient) !important;
+  color:#102532 !important; font-weight:800 !important; border:none !important;
+}
+.stButton > button[kind="primary"]:hover, .stFormSubmitButton > button:hover {
+  box-shadow:var(--shadow-md); transform:translateY(-1px);
+}
+.stButton > button:active { transform:scale(.98); }
+
+/* ---------- INPUTS ---------- */
+/* radius 4px, borde grey-300, focus ring teal 2px */
+.stTextInput input, .stNumberInput input, .stTextArea textarea,
+.stDateInput input, [data-baseweb="select"] > div {
+  border-radius:var(--radius-input) !important;
+  border:1px solid var(--border-1) !important;
+  font-family:"Red Hat Display", sans-serif !important;
+}
+.stTextInput input:focus, .stNumberInput input:focus, .stTextArea textarea:focus {
+  border-color:var(--ms-blue) !important;
+  box-shadow:0 0 0 2px rgba(0,198,209,.35) !important; outline:none !important;
+}
+label, .stTextInput label, .stSelectbox label {
+  font-weight:600 !important; color:var(--fg-1) !important;
+}
+
+/* ---------- CARDS ---------- */
+/* Blanco, radius 16px, borde 1px grey-300, shadow-sm -> hover shadow-md +lift.
+   Nunca borde-izquierdo de color (anti-patrón). */
+.ms-card {
+  background:#fff; border:1px solid var(--border-1); border-radius:var(--radius-card);
+  padding:24px; box-shadow:var(--shadow-sm);
+  transition:box-shadow var(--dur-base), transform var(--dur-base);
+}
+.ms-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.ms-card h4 { font-weight:700; font-size:17px; line-height:1.25;
+  letter-spacing:-.01em; color:var(--ms-dark); margin:0 0 8px; }
+.ms-card p  { font-size:13px; line-height:1.55; color:var(--fg-2); margin:0 0 16px; }
+.ms-card img { width:48px; height:auto; margin-bottom:16px; }
+.ms-tag { display:inline-block; font-size:11px; font-weight:600; padding:5px 10px;
+  border-radius:var(--radius-pill); border:1px solid var(--border-1); color:var(--fg-2); }
+
+/* st.container(border=True) toma el look de card */
+[data-testid="stVerticalBlockBorderWrapper"] {
+  border-radius:var(--radius-card) !important; border-color:var(--border-1) !important;
+  box-shadow:var(--shadow-sm);
+}
+
+/* ---------- Sección dark (CTA / footer) ---------- */
+.ms-dark { background:var(--ms-dark); color:#fff; border-radius:var(--radius-card);
+  padding:48px; position:relative; }
+.ms-dark::before { content:""; position:absolute; top:0; left:0; right:0; height:1px;
+  background:var(--ms-gradient); }
+
+/* ---------- Links ---------- */
+a, .stMarkdown a { color:var(--fg-accent); text-decoration:none; }
+a:hover, .stMarkdown a:hover { text-decoration:underline; text-underline-offset:3px; }

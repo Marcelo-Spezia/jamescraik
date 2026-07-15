@@ -25,7 +25,7 @@ import chat_builder  # noqa: E402
 import context as ms_context  # noqa: E402
 import enrich  # noqa: E402
 import i18n  # noqa: E402
-import ms_theme  # noqa: E402
+import ms_ui  # noqa: E402
 import qualify  # noqa: E402
 
 try:
@@ -93,7 +93,7 @@ def _require_auth() -> None:
 
 
 st.set_page_config(page_title=i18n.t("page_title"), layout="centered")
-ms_theme.inject_ms_theme()  # marca Making Sense — una sola vez, tras set_page_config
+ms_ui.apply_theme()  # Making Sense Design System — una sola vez, tras set_page_config
 _load_dotenv()
 st.session_state.setdefault("lang", os.getenv("APP_DEFAULT_LANG", "es"))
 _require_auth()
@@ -459,7 +459,7 @@ with st.sidebar:
     if i18n.LANGS[_sel] != _lang():
         st.session_state["lang"] = i18n.LANGS[_sel]
         st.rerun()
-    st.markdown("### " + L("app_title"))
+    ms_ui.logo("dark", width=160)
     current = st.session_state.get("view", "home")
 
     # Inicio (biblioteca de campañas) como punto de entrada.

@@ -1,0 +1,294 @@
+/* =========================================================================
+   Making Sense Design System — Core Tokens
+   Typography + Color foundations. Import this before anything else.
+   ========================================================================= */
+
+/* ---------- Fonts ---------- */
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-Light.ttf") format("truetype");
+  font-weight: 300; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-Regular.ttf") format("truetype");
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-Italic.ttf") format("truetype");
+  font-weight: 400; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-Medium.ttf") format("truetype");
+  font-weight: 500; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-MediumItalic.ttf") format("truetype");
+  font-weight: 500; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-SemiBold.ttf") format("truetype");
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-SemiBoldItalic.ttf") format("truetype");
+  font-weight: 600; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-Bold.ttf") format("truetype");
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-BoldItalic.ttf") format("truetype");
+  font-weight: 700; font-style: italic; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-ExtraBold.ttf") format("truetype");
+  font-weight: 800; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: "Red Hat Display";
+  src: url("./fonts/RedHatDisplay-Black.ttf") format("truetype");
+  font-weight: 900; font-style: normal; font-display: swap;
+}
+
+:root {
+  /* =================================================================
+     COLOR — Primary brand
+     The three-color identity core. Gradient runs green → sense-blue.
+     Pantones: Making-green 7479C · Sense-blue 3115C · Dark-blue 539C
+     ================================================================= */
+  --ms-green:         #0ECC7E;   /* Making-green — primary       */
+  --ms-green-deep:    #08B368;   /* darker step, hover state     */
+  --ms-blue:          #00C6D1;   /* Sense-blue — primary         */
+  --ms-blue-deep:     #00A8B2;   /* darker step, hover state     */
+  --ms-dark:          #102532;   /* Dark-blue — primary text     */
+
+  /* Legacy alias (kept so older components keep working) */
+  --ms-teal:          var(--ms-blue);
+  --ms-teal-deep:     var(--ms-blue-deep);
+  --ms-mint:          #7FE3C2;   /* soft tint for backgrounds    */
+  --ms-mint-pale:     #E6FAF3;   /* softest tint, surfaces       */
+
+  /* Signature gradient — used on headlines, icons, accent rules. */
+  --ms-gradient:   linear-gradient(90deg, var(--ms-green) 0%, var(--ms-blue) 100%);  /* @kind color */
+  --ms-gradient-h: linear-gradient(90deg, var(--ms-green) 0%, var(--ms-blue) 100%);  /* @kind color */
+  --ms-gradient-v: linear-gradient(180deg, var(--ms-green) 0%, var(--ms-blue) 100%); /* @kind color */
+  --ms-gradient-d: linear-gradient(135deg, var(--ms-green) 0%, var(--ms-blue) 100%); /* @kind color */
+
+  /* =================================================================
+     COLOR — Secondary brand
+     Reserved for specific uses — moderate, strategic, never
+     competing with the primaries.
+     Pantones: Purple 265C · Red 1785C · Orange 150C
+     ================================================================= */
+  --ms-purple:        #9273F4;
+  --ms-red:           #FF5551;
+  --ms-orange:        #FFA143;
+
+  /* =================================================================
+     COLOR — Grey scale (official 12-step)
+     ================================================================= */
+  --ms-white:         #FFFFFF;
+  --ms-grey-50:       #F9F9F9;
+  --ms-grey-100:      #F4F4F4;
+  --ms-grey-200:      #EEEEEE;
+  --ms-grey-300:      #E0E0E0;
+  --ms-grey-400:      #BDBDBD;
+  --ms-grey-500:      #9E9E9E;
+  --ms-grey-600:      #757575;
+  --ms-grey-700:      #616161;
+  --ms-grey-800:      #424242;
+  --ms-grey-900:      #212121;
+  --ms-black:         #000000;
+
+  /* Legacy navy aliases — map to nearest grey / primary Dark-blue
+     so existing components don't break. */
+  --ms-navy-900:      var(--ms-dark);
+  --ms-navy-800:      var(--ms-dark);      /* primary text        */
+  --ms-navy-700:      var(--ms-grey-800);
+  --ms-navy-600:      var(--ms-grey-700);
+  --ms-navy-500:      var(--ms-grey-600);
+  --ms-navy-400:      var(--ms-grey-500);
+  --ms-navy-300:      var(--ms-grey-400);
+  --ms-navy-200:      var(--ms-grey-300);
+  --ms-navy-100:      var(--ms-grey-200);
+  --ms-navy-50:       var(--ms-grey-50);
+
+  /* =================================================================
+     COLOR — Semantic
+     Semantics lean on the palette: success = Making-green, info =
+     Sense-blue, warning = secondary Orange, danger = secondary Red.
+     ================================================================= */
+  --ms-success:       var(--ms-green);
+  --ms-warning:       var(--ms-orange);
+  --ms-danger:        var(--ms-red);
+  --ms-info:          var(--ms-blue);
+
+  /* =================================================================
+     COLOR — Semantic / Usage tokens
+     Prefer these in components over raw palette.
+     ================================================================= */
+  --fg-1:             var(--ms-dark);         /* primary text   */
+  --fg-2:             var(--ms-grey-600);     /* secondary      */
+  --fg-3:             var(--ms-grey-500);     /* tertiary       */
+  --fg-on-dark:       var(--ms-white);
+  --fg-on-dark-2:     rgba(255,255,255,0.72);
+  --fg-accent:        var(--ms-blue-deep);    /* inline links   */
+
+  --bg-0:             var(--ms-white);        /* page           */
+  --bg-1:             var(--ms-grey-50);      /* elevated card  */
+  --bg-2:             var(--ms-grey-100);     /* inset panel    */
+  --bg-dark:          var(--ms-dark);         /* dark section   */
+  --bg-darker:        #0A1A24;
+
+  --border-1:         var(--ms-grey-300);
+  --border-2:         var(--ms-grey-400);
+  --border-on-dark:   rgba(255,255,255,0.12);
+
+  /* =================================================================
+     TYPE — Families
+     ================================================================= */
+  --font-sans:  "Red Hat Display", ui-sans-serif, system-ui, -apple-system,
+                "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:  ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas,
+                "Liberation Mono", "Courier New", monospace;
+
+  /* =================================================================
+     TYPE — Scale (1.25 ratio, rounded)
+     ================================================================= */
+  --fs-12:  0.75rem;   --lh-12: 1.5;  /* @kind font */
+  --fs-14:  0.875rem;  --lh-14: 1.5;  /* @kind font */
+  --fs-16:  1rem;      --lh-16: 1.6;  /* @kind font */
+  --fs-18:  1.125rem;  --lh-18: 1.55; /* @kind font */
+  --fs-20:  1.25rem;   --lh-20: 1.5;  /* @kind font */
+  --fs-24:  1.5rem;    --lh-24: 1.4;  /* @kind font */
+  --fs-32:  2rem;      --lh-32: 1.25; /* @kind font */
+  --fs-40:  2.5rem;    --lh-40: 1.15; /* @kind font */
+  --fs-56:  3.5rem;    --lh-56: 1.05; /* @kind font */
+  --fs-72:  4.5rem;    --lh-72: 1.0;  /* @kind font */
+
+  /* Semantic type styles */
+  --display-1: 900 var(--fs-72)/var(--lh-72) var(--font-sans);
+  --display-2: 900 var(--fs-56)/var(--lh-56) var(--font-sans);
+  --h1:        800 var(--fs-40)/var(--lh-40) var(--font-sans);
+  --h2:        700 var(--fs-32)/var(--lh-32) var(--font-sans);
+  --h3:        700 var(--fs-24)/var(--lh-24) var(--font-sans);
+  --h4:        600 var(--fs-20)/var(--lh-20) var(--font-sans);
+  --h5:        600 var(--fs-18)/var(--lh-18) var(--font-sans);
+  --body-lg:   400 var(--fs-18)/var(--lh-18) var(--font-sans);
+  --body:      400 var(--fs-16)/var(--lh-16) var(--font-sans);
+  --body-sm:   400 var(--fs-14)/var(--lh-14) var(--font-sans);
+  --caption:   500 var(--fs-12)/var(--lh-12) var(--font-sans);
+  --eyebrow:   700 var(--fs-12)/1.2 var(--font-sans); /* uppercase */
+  --code:      500 var(--fs-14)/var(--lh-14) var(--font-mono);
+
+  /* Letter-spacing */
+  --ls-tight:   -0.02em; /* @kind font */
+  --ls-snug:    -0.01em; /* @kind font */
+  --ls-normal:   0;      /* @kind font */
+  --ls-wide:     0.04em; /* @kind font */
+  --ls-eyebrow:  0.12em; /* @kind font */
+
+  /* =================================================================
+     SPACING — 4px base
+     ================================================================= */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* =================================================================
+     RADII
+     ================================================================= */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* =================================================================
+     SHADOWS — neutral grey, never tinted.
+     ================================================================= */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 8px 20px rgba(0, 0, 0, 0.10);
+  --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.14);
+
+  /* =================================================================
+     MOTION
+     ================================================================= */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);   /* @kind other */
+  --ease-in-out: cubic-bezier(0.5, 0, 0.2, 1);  /* @kind other */
+  --dur-fast: 120ms;  /* @kind other */
+  --dur-base: 200ms;  /* @kind other */
+  --dur-slow: 320ms;  /* @kind other */
+
+  /* =================================================================
+     LAYOUT
+     ================================================================= */
+  --container-max: 1200px;
+  --gutter: 24px;
+}
+
+/* =========================================================================
+   Reset + base
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font: var(--body);
+  color: var(--fg-1);
+  background: var(--bg-0);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Semantic element defaults */
+h1 { font: var(--h1); letter-spacing: var(--ls-tight); margin: 0; color: var(--fg-1); }
+h2 { font: var(--h2); letter-spacing: var(--ls-snug);  margin: 0; color: var(--fg-1); }
+h3 { font: var(--h3); letter-spacing: var(--ls-snug);  margin: 0; color: var(--fg-1); }
+h4 { font: var(--h4); margin: 0; color: var(--fg-1); }
+h5 { font: var(--h5); margin: 0; color: var(--fg-1); }
+p  { font: var(--body); margin: 0; color: var(--fg-1); text-wrap: pretty; }
+small { font: var(--body-sm); color: var(--fg-2); }
+code, pre { font: var(--code); }
+a { color: var(--fg-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Utility classes you'll reach for often */
+.ms-eyebrow {
+  font: var(--eyebrow);
+  letter-spacing: var(--ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--ms-green);
+}
+.ms-gradient-text {
+  background: var(--ms-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.ms-gradient-bg { background: var(--ms-gradient); color: var(--fg-on-dark); }
+.ms-container { max-width: var(--container-max); margin: 0 auto; padding: 0 var(--gutter); }
