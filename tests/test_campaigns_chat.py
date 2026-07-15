@@ -32,6 +32,15 @@ def test_save_campaign_updates_same_slug(tmp_path, monkeypatch):
     assert len(lst) == 1 and lst[0]["rubric"] == "v2"  # mismo slug → actualiza
 
 
+def test_delete_campaign(tmp_path, monkeypatch):
+    monkeypatch.setattr(campaigns, "CAMPAIGNS_DIR", tmp_path / "campaigns")
+    campaigns.save_campaign({"name": "Borrar esta", "rubric": "x"})
+    assert len(campaigns.list_campaigns()) == 1
+    assert campaigns.delete_campaign("borrar-esta") is True
+    assert campaigns.list_campaigns() == []
+    assert campaigns.delete_campaign("no-existe") is False  # idempotente
+
+
 # --- chat_builder (cliente mockeado) ---
 class _Block:
     def __init__(self, t):

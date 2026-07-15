@@ -37,3 +37,12 @@ def test_no_gate_when_password_unset(monkeypatch):
     at.run()
     assert not _has_password_input(at)
     assert not at.exception  # la vista principal carga sin errores (bug del slider incluido)
+
+
+def test_home_is_default_view(monkeypatch):
+    monkeypatch.delenv("APP_PASSWORD", raising=False)
+    at = AppTest.from_file(APP)
+    at.run()
+    assert at.session_state["view"] == "home"          # abre en Home
+    assert any("Home" in (t.value or "") or "Inicio" in (t.value or "") for t in at.title)
+    assert not at.exception

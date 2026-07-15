@@ -25,9 +25,33 @@ T: dict[str, dict[str, str]] = {
     "auth_password": {"es": "Contraseña", "en": "Password"},
     "auth_wrong": {"es": "Contraseña incorrecta.", "en": "Incorrect password."},
     "lang_label": {"es": "🌐 Idioma / Language", "en": "🌐 Language / Idioma"},
+    "nav_home": {"es": "🏠 Inicio", "en": "🏠 Home"},
     "nav_qualify": {"es": "🎯 Calificar", "en": "🎯 Qualify"},
     "nav_chat": {"es": "🧭 Definir campaña", "en": "🧭 Define campaign"},
     "nav_context": {"es": "🏢 Contexto", "en": "🏢 Context"},
+    "nav_group_flow": {"es": "FLUJO", "en": "WORKFLOW"},
+    "nav_group_setup": {"es": "CONFIGURACIÓN", "en": "SETUP"},
+
+    # --- home / biblioteca de campañas ---
+    "home_title": {"es": "🏠 Inicio", "en": "🏠 Home"},
+    "home_caption": {
+        "es": "Tus campañas guardadas. Creá una nueva o abrí una para calificar tu lista.",
+        "en": "Your saved campaigns. Create a new one or open one to qualify your list."},
+    "home_new": {"es": "➕ Nueva campaña", "en": "➕ New campaign"},
+    "home_empty": {"es": "Todavía no tenés campañas. Creá la primera con **➕ Nueva campaña**.",
+                   "en": "No campaigns yet. Create your first one with **➕ New campaign**."},
+    "home_count": {"es": "{n} campaña(s)", "en": "{n} campaign(s)"},
+    "no_vp": {"es": "(sin propuesta de valor)", "en": "(no value proposition)"},
+    "card_meta": {"es": "{f} filtros · {s} señales", "en": "{f} filters · {s} signals"},
+    "card_updated": {"es": "Editada: {date}", "en": "Updated: {date}"},
+    "card_use": {"es": "🎯 Usar", "en": "🎯 Use"},
+    "card_edit_help": {"es": "Editar", "en": "Edit"},
+    "card_dup_help": {"es": "Duplicar", "en": "Duplicate"},
+    "card_del_help": {"es": "Eliminar", "en": "Delete"},
+    "copy_suffix": {"es": "(copia)", "en": "(copy)"},
+    "confirm_delete": {"es": "¿Eliminar «{name}»?", "en": "Delete «{name}»?"},
+    "confirm_yes": {"es": "Sí, eliminar", "en": "Yes, delete"},
+    "confirm_cancel": {"es": "Cancelar", "en": "Cancel"},
     "sidebar_footer": {"es": "POC LeadGen · Making Sense", "en": "LeadGen POC · Making Sense"},
     "missing_key": {"es": "Falta ANTHROPIC_API_KEY.", "en": "ANTHROPIC_API_KEY is missing."},
 
@@ -111,8 +135,11 @@ T: dict[str, dict[str, str]] = {
     "how_many": {"es": "¿Cuántos calificar?", "en": "How many to qualify?"},
     "upload_to_qualify": {"es": "Subí un CSV arriba para calificar.",
                           "en": "Upload a CSV above to qualify."},
-    "qualify_cost": {"es": "⚠️ Califica los primeros **{n}**. Cada lead = 1 llamada a Claude.",
-                     "en": "⚠️ Qualifies the first **{n}**. Each lead = 1 Claude call."},
+    "qualify_cost": {
+        "es": "⚠️ Se califican **{n}** leads (en tandas de ~10 por llamada a Claude). "
+              "Listas grandes tardan más y cuestan más.",
+        "en": "⚠️ Qualifies **{n}** leads (in batches of ~10 per Claude call). "
+              "Large lists take longer and cost more."},
     "qualify_btn": {"es": "🎯 Calificar lista", "en": "🎯 Qualify list"},
     "qualify_spinner": {"es": "Calificando {n} leads…", "en": "Qualifying {n} leads…"},
     "qualify_error": {"es": "No se pudo calificar:\n\n{err}", "en": "Could not qualify:\n\n{err}"},

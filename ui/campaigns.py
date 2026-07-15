@@ -53,3 +53,12 @@ def list_campaigns() -> list[dict[str, Any]]:
 
 def load_campaign(slug: str) -> dict[str, Any]:
     return json.loads((CAMPAIGNS_DIR / f"{slug}.json").read_text(encoding="utf-8"))
+
+
+def delete_campaign(slug: str) -> bool:
+    """Borra una campaña. Devuelve True si existía."""
+    p = CAMPAIGNS_DIR / f"{slug}.json"
+    if p.exists():
+        p.unlink()
+        return True
+    return False

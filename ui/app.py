@@ -95,8 +95,76 @@ st.set_page_config(page_title=i18n.t("page_title"), page_icon="🎯", layout="ce
 _load_dotenv()
 st.session_state.setdefault("lang", os.getenv("APP_DEFAULT_LANG", "es"))
 _require_auth()
-st.session_state.setdefault("view", "qualify")
+st.session_state.setdefault("view", "home")
 HAS_CLAUDE = bool(os.getenv("ANTHROPIC_API_KEY"))
+
+
+# ==========================================================================
+# Vista: Inicio (biblioteca de campañas)
+# ==========================================================================
+def _campaign_card(c: dict) -> None:
+    slug = c["slug"]
+    st.markdown(f"**{c.get('name') or '—'}**")
+    vp = (c.get("value_prop") or "").strip() or L("no_vp")
+    st.caption(vp[:120] + ("…" if len(vp) > 120 else ""))
+    st.caption(L("card_meta", f=len(c.get("sales_nav_filters", [])),
+                 s=len(c.get("enrichment_signals", []))))
+    upd = (c.get("updated_at") or "")[:10]
+    if upd:
+        st.caption(L("card_updated", date=upd))
+
+    if st.session_state.get("confirm_delete") == slug:
+        st.warning(L("confirm_delete", name=c.get("name") or "—"))
+        cc = st.columns(2)
+        if cc[0].button(L("confirm_yes"), key=f"delyes_{slug}", type="primary",
+                        use_container_width=True):
+            campaigns.delete_campaign(slug)
+            st.session_state.pop("confirm_delete", None)
+            st.rerun()
+        if cc[1].button(L("confirm_cancel"), key=f"delno_{slug}", use_container_width=True):
+            st.session_state.pop("confirm_delete", None)
+            st.rerun()
+        return
+
+    b = st.columns([2, 1, 1, 1])
+    if b[0].button(L("card_use"), key=f"use_{slug}", type="primary", use_container_width=True):
+        st.session_state["loaded_campaign"] = slug
+        st.session_state["view"] = "qualify"
+        st.rerun()
+    if b[1].button("✏️", key=f"edit_{slug}", help=L("card_edit_help"), use_container_width=True):
+        st.session_state["draft_campaign"] = campaigns.load_campaign(slug)
+        st.session_state["view"] = "chat"
+        st.rerun()
+    if b[2].button("📋", key=f"dup_{slug}", help=L("card_dup_help"), use_container_width=True):
+        src = campaigns.load_campaign(slug)
+        copy = {k: v for k, v in src.items()
+                if k not in ("slug", "created_at", "updated_at")}
+        copy["name"] = f"{src.get('name', '')} {L('copy_suffix')}".strip()
+        campaigns.save_campaign(copy)
+        st.rerun()
+    if b[3].button("🗑️", key=f"del_{slug}", help=L("card_del_help"), use_container_width=True):
+        st.session_state["confirm_delete"] = slug
+        st.rerun()
+
+
+def render_home() -> None:
+    st.title(L("home_title"))
+    st.caption(L("home_caption"))
+    if st.button(L("home_new"), type="primary"):
+        st.session_state.pop("draft_campaign", None)
+        st.session_state.pop("chat", None)
+        st.session_state["view"] = "chat"
+        st.rerun()
+    camps = campaigns.list_campaigns()
+    if not camps:
+        st.info(L("home_empty"))
+        return
+    st.caption(L("home_count", n=len(camps)))
+    for i in range(0, len(camps), 2):
+        cols = st.columns(2)
+        for col, c in zip(cols, camps[i:i + 2]):
+            with col, st.container(border=True):
+                _campaign_card(c)
 
 
 # ==========================================================================
@@ -257,11 +325,12 @@ def render_qualify() -> None:
     st.subheader(L("sec_qualify"))
     if not HAS_CLAUDE:
         st.warning(L("missing_key"))
-    top = min(len(leads), 100)
-    if top >= 2:
-        n = st.slider(L("how_many"), 1, top, min(top, 20))
+    total = len(leads)
+    if total >= 2:
+        # Sin tope artificial: el máximo es la lista completa; default = toda la lista.
+        n = st.slider(L("how_many"), 1, total, total)
     else:
-        n = top  # 0 (sin lista aún) o 1 (un solo lead) → sin slider
+        n = total  # 0 (sin lista aún) o 1 (un solo lead) → sin slider
         if not leads:
             st.caption(L("upload_to_qualify"))
     if leads:
@@ -371,6 +440,14 @@ def render_context() -> None:
 # ==========================================================================
 # Router
 # ==========================================================================
+def _nav(view_key: str, label_key: str, current: str) -> None:
+    """Botón de navegación; resalta (primary) el que corresponde a la vista activa."""
+    if st.button(L(label_key), use_container_width=True,
+                 type="primary" if current == view_key else "secondary"):
+        st.session_state["view"] = view_key
+        st.rerun()
+
+
 with st.sidebar:
     _labels = list(i18n.LANGS.keys())
     _codes = list(i18n.LANGS.values())
@@ -381,19 +458,28 @@ with st.sidebar:
         st.session_state["lang"] = i18n.LANGS[_sel]
         st.rerun()
     st.markdown("### " + L("app_title"))
-    if st.button(L("nav_qualify"), use_container_width=True):
-        st.session_state["view"] = "qualify"
-        st.rerun()
-    if st.button(L("nav_chat"), use_container_width=True):
-        st.session_state["view"] = "chat"
-        st.rerun()
-    if st.button(L("nav_context"), use_container_width=True):
-        st.session_state["view"] = "context"
-        st.rerun()
+    current = st.session_state.get("view", "home")
+
+    # Inicio (biblioteca de campañas) como punto de entrada.
+    _nav("home", "nav_home", current)
+
+    # Segmento 1 — flujo de trabajo: primero definir la campaña, después calificar.
+    st.caption(L("nav_group_flow"))
+    _nav("chat", "nav_chat", current)
+    _nav("qualify", "nav_qualify", current)
+
+    # Segmento 2 — configuración (zona más estática).
+    st.divider()
+    st.caption(L("nav_group_setup"))
+    _nav("context", "nav_context", current)
+
+    st.divider()
     st.caption(L("sidebar_footer"))
 
 view = st.session_state["view"]
-if view == "chat":
+if view == "home":
+    render_home()
+elif view == "chat":
     render_chat()
 elif view == "context":
     render_context()
