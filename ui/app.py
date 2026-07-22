@@ -25,6 +25,8 @@ import chat_builder  # noqa: E402
 import context as ms_context  # noqa: E402
 import enrich  # noqa: E402
 import i18n  # noqa: E402
+import leads_store  # noqa: E402
+import message as msg_gen  # noqa: E402
 import ms_ui  # noqa: E402
 import qualify  # noqa: E402
 
@@ -48,7 +50,10 @@ def _load_dotenv() -> None:
 
 TIER_COLOR = {"A": "#16a34a", "B": "#2563eb", "C": "#d97706", "D": "#9ca3af"}
 _BASE_LEAD_KEYS = {"tier", "name", "title", "company", "domain", "size", "industry",
-                   "location", "email", "linkedin", "reason"}
+                   "location", "email", "linkedin", "reason",
+                   # campos del pipeline (no son insights de enrichment)
+                   "id", "status", "message", "notes", "campaign_slug",
+                   "campaign_name", "updated_at"}
 
 
 def _lang() -> str:
@@ -360,10 +365,24 @@ def render_qualify() -> None:
             cols[i].metric(f"Tier {tier}", counts.get(tier, 0))
         pick = st.multiselect(L("show_tiers"), ["A", "B", "C", "D"], default=["A", "B"])
         shown = [r for r in res if r["tier"] in pick]
-        st.download_button(
+        dcol, scol = st.columns(2)
+        dcol.download_button(
             L("download_csv", n=len(shown)), qualify.leads_to_csv(shown),
             file_name=f"{st.session_state.get('camp_name', 'leads')}_{L('file_suffix')}.csv",
-            mime="text/csv", type="primary")
+            mime="text/csv", use_container_width=True)
+        # Guardar en el pipeline persistente (Supabase) — solo los tiers elegidos.
+        save_tiers = scol.multiselect(L("save_tiers"), ["A", "B", "C", "D"],
+                                      default=["A", "B"], key="save_tiers",
+                                      label_visibility="collapsed")
+        to_save = [r for r in res if r["tier"] in save_tiers]
+        if scol.button(L("save_to_pipeline"), type="primary", use_container_width=True,
+                       disabled=not to_save):
+            slug = st.session_state.get("loaded_campaign") or campaigns._slug(name)
+            try:
+                ins, upd = leads_store.get_store().upsert_leads(to_save, slug, name or "leads")
+                st.success(L("saved_to_pipeline", ins=ins, upd=upd))
+            except Exception as exc:  # noqa: BLE001
+                st.error(L("save_error", err=exc))
         for r in shown:
             c = TIER_COLOR.get(r["tier"], "#9ca3af")
             with st.container(border=True):
@@ -425,6 +444,91 @@ def render_qualify() -> None:
 
 
 # ==========================================================================
+# Vista: Pipeline (leads guardados + estado + mensaje)
+# ==========================================================================
+def _value_prop_for(lead: dict, camps: list[dict]) -> str:
+    camp = next((c for c in camps if c["slug"] == lead.get("campaign_slug")), None)
+    return camp.get("value_prop", "") if camp else ""
+
+
+def _pipeline_card(lead: dict, store, camps: list[dict], context: str, lang: str) -> None:
+    lid = lead["id"]
+    color = TIER_COLOR.get(lead.get("tier"), "#9ca3af")
+    keys = leads_store.STATUSES
+    labels = [L(f"status_{k}") for k in keys]
+    with st.container(border=True):
+        st.markdown(
+            f"<span style='background:{color};color:#fff;border-radius:6px;padding:1px 8px;"
+            f"font-weight:800'>{lead.get('tier') or '—'}</span> &nbsp;<b>{lead.get('name')}</b>"
+            f" — {lead.get('title', '')} · {lead.get('company', '')}", unsafe_allow_html=True)
+        if lead.get("reason"):
+            st.caption(lead["reason"])
+
+        cur = lead.get("status", "qualified")
+        cur = cur if cur in keys else "qualified"
+        new_label = st.selectbox(L("lead_status"), labels, index=keys.index(cur),
+                                 key=f"st_{lid}")
+        new_key = keys[labels.index(new_label)]
+        if new_key != cur:
+            store.update_fields(lid, {"status": new_key})
+            st.rerun()
+
+        ins = [(k, lead[k]) for k in _insight_keys(lead) if lead.get(k)]
+        if ins:
+            with st.expander(L("insights_expander")):
+                for k, v in ins:
+                    st.markdown(f"**{_signal_label(k)}:** {v}")
+
+        label = L("regen_message") if lead.get("message") else L("gen_message")
+        if st.button(label, key=f"gen_{lid}", disabled=not HAS_CLAUDE):
+            with st.spinner(L("gen_message_spinner")):
+                m = msg_gen.generate_message(lead, value_prop=_value_prop_for(lead, camps),
+                                             context=context, lang=lang)
+            store.update_fields(lid, {"message": m, "status": "message_ready"})
+            st.rerun()
+
+        if lead.get("message"):
+            edited = st.text_area(L("message_label"), value=lead["message"],
+                                  key=f"msg_{lid}", height=140)
+            if st.button(L("save_message"), key=f"savemsg_{lid}"):
+                store.update_fields(lid, {"message": edited})
+                st.success(L("message_saved"))
+            st.caption(L("copy_hint"))
+            st.code(edited, language=None)
+
+
+def render_pipeline() -> None:
+    lang = _lang()
+    st.title(L("pipeline_title"))
+    st.caption(L("pipeline_caption"))
+    store = leads_store.get_store()
+    camps = campaigns.list_campaigns()
+    slug_by_name = {c["name"]: c["slug"] for c in camps}
+
+    fcol, scol = st.columns(2)
+    camp_choice = fcol.selectbox(L("pipeline_campaign"),
+                                 [L("pipeline_all")] + list(slug_by_name))
+    slug = None if camp_choice == L("pipeline_all") else slug_by_name[camp_choice]
+    keys = leads_store.STATUSES
+    labels = {k: L(f"status_{k}") for k in keys}
+    picked = scol.multiselect(L("pipeline_status_filter"), [labels[k] for k in keys])
+    picked_keys = [k for k in keys if labels[k] in picked] or None
+
+    try:
+        leads = store.list_leads(campaign_slug=slug, statuses=picked_keys)
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Error: {exc}")
+        return
+    if not leads:
+        st.info(L("pipeline_empty"))
+        return
+    st.caption(L("pipeline_count", n=len(leads)))
+    context = ms_context.load_context()
+    for lead in leads:
+        _pipeline_card(lead, store, camps, context, lang)
+
+
+# ==========================================================================
 # Vista: Contexto de Making Sense
 # ==========================================================================
 def render_context() -> None:
@@ -469,6 +573,7 @@ with st.sidebar:
     st.caption(L("nav_group_flow"))
     _nav("chat", "nav_chat", current)
     _nav("qualify", "nav_qualify", current)
+    _nav("pipeline", "nav_pipeline", current)
 
     # Segmento 2 — configuración (zona más estática).
     st.divider()
@@ -483,6 +588,8 @@ if view == "home":
     render_home()
 elif view == "chat":
     render_chat()
+elif view == "pipeline":
+    render_pipeline()
 elif view == "context":
     render_context()
 else:

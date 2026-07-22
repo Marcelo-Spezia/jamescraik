@@ -30,6 +30,7 @@ T: dict[str, dict[str, str]] = {
     "nav_home": {"es": "Inicio", "en": "Home"},
     "nav_qualify": {"es": "Calificar", "en": "Qualify"},
     "nav_chat": {"es": "Definir campaña", "en": "Define campaign"},
+    "nav_pipeline": {"es": "Pipeline", "en": "Pipeline"},
     "nav_context": {"es": "Contexto", "en": "Context"},
     "nav_group_flow": {"es": "FLUJO", "en": "WORKFLOW"},
     "nav_group_setup": {"es": "CONFIGURACIÓN", "en": "SETUP"},
@@ -56,6 +57,44 @@ T: dict[str, dict[str, str]] = {
     "confirm_delete": {"es": "¿Eliminar «{name}»?", "en": "Delete «{name}»?"},
     "confirm_yes": {"es": "Sí, eliminar", "en": "Yes, delete"},
     "confirm_cancel": {"es": "Cancelar", "en": "Cancel"},
+
+    # --- guardar al pipeline (en Calificar) ---
+    "save_to_pipeline": {"es": "Guardar en el pipeline", "en": "Save to pipeline"},
+    "save_tiers": {"es": "¿Qué tiers guardar?", "en": "Which tiers to save?"},
+    "saved_to_pipeline": {"es": "Guardados en el pipeline: {ins} nuevos, {upd} actualizados.",
+                          "en": "Saved to the pipeline: {ins} new, {upd} updated."},
+    "save_error": {"es": "No se pudo guardar:\n\n{err}", "en": "Couldn't save:\n\n{err}"},
+
+    # --- vista Pipeline ---
+    "pipeline_title": {"es": "Pipeline", "en": "Pipeline"},
+    "pipeline_caption": {
+        "es": "Tus leads guardados y en qué etapa están. Actualizá el estado, generá el "
+              "mensaje y copialo a Expandi. La info queda guardada para volver cuando quieras.",
+        "en": "Your saved leads and where they are in the journey. Update the status, generate "
+              "the message, and copy it to Expandi. Everything is saved so you can come back."},
+    "pipeline_campaign": {"es": "Campaña", "en": "Campaign"},
+    "pipeline_all": {"es": "(todas)", "en": "(all)"},
+    "pipeline_status_filter": {"es": "Filtrar por estado", "en": "Filter by status"},
+    "pipeline_empty": {"es": "No hay leads guardados con esos filtros.",
+                       "en": "No saved leads match these filters."},
+    "pipeline_count": {"es": "{n} lead(s)", "en": "{n} lead(s)"},
+    "lead_status": {"es": "Estado", "en": "Status"},
+    "gen_message": {"es": "Generar mensaje", "en": "Generate message"},
+    "regen_message": {"es": "Regenerar", "en": "Regenerate"},
+    "gen_message_spinner": {"es": "Escribiendo el mensaje…", "en": "Writing the message…"},
+    "message_label": {"es": "Mensaje (editable)", "en": "Message (editable)"},
+    "save_message": {"es": "Guardar mensaje", "en": "Save message"},
+    "message_saved": {"es": "Mensaje guardado.", "en": "Message saved."},
+    "copy_hint": {"es": "Copialo y pegalo en Expandi:", "en": "Copy it and paste it into Expandi:"},
+
+    # --- estados del pipeline ---
+    "status_qualified": {"es": "Calificado", "en": "Qualified"},
+    "status_connection_sent": {"es": "Conexión enviada", "en": "Connection sent"},
+    "status_accepted": {"es": "Conectado", "en": "Connected"},
+    "status_message_ready": {"es": "Mensaje listo", "en": "Message ready"},
+    "status_sent": {"es": "Enviado", "en": "Sent"},
+    "status_replied": {"es": "Respondió", "en": "Replied"},
+    "status_discarded": {"es": "Descartado", "en": "Discarded"},
 
     # --- chat view ---
     "chat_title": {"es": "Definir campaña", "en": "Define campaign"},
