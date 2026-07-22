@@ -27,7 +27,10 @@ _BASE_KEYS = {"id", "campaign_slug", "campaign_name", "name", "title", "company"
 
 
 def norm_linkedin(url: str) -> str | None:
-    """Normaliza la URL de LinkedIn (clave de matcheo). Vacío → None."""
+    """Normaliza la URL de LinkedIn (clave de matcheo). Vacío → None.
+
+    OJO: la Edge Function del webhook (supabase/functions/expandi-webhook) replica
+    esta lógica en TS; si cambia acá, actualizar allá o el matcheo se rompe."""
     u = (url or "").strip().lower()
     if not u:
         return None
