@@ -28,6 +28,11 @@ ui = [
     "httpx>=0.28,<1",
     "anthropic>=0.109.1,<0.110",
 ]
+# Persistencia de leads (pipeline de outreach) en Supabase (Postgres).
+supabase = [
+    # 2.31.0 (2026-06-04) — última estable con >=7 días publicada al fijarla.
+    "supabase>=2.31,<3",
+]
 dev = [
     "pytest>=8.0,<9",
     "pytest-cov>=5.0,<6",
