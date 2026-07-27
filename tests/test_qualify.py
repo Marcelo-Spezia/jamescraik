@@ -150,6 +150,13 @@ def test_qualify_batch_maps_by_index_and_caches():
     assert "ctx MS" in call["system"][0]["text"]
 
 
+def test_qualify_uses_haiku_model_by_default():
+    # Optimización de costo: calificar corre con Haiku 4.5 (no Opus).
+    client = _FakeClient({"results": [{"index": 0, "tier": "A", "reason": "x"}]})
+    qualify.qualify_batch([{"name": "a"}], "rúbrica", "", client)
+    assert client.calls[0]["model"] == "claude-haiku-4-5"
+
+
 def test_qualify_leads_batches_and_sorts():
     payload = {"results": [{"index": 0, "tier": "C", "reason": "x"},
                            {"index": 1, "tier": "A", "reason": "y"}]}

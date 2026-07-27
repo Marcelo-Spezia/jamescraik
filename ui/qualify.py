@@ -17,7 +17,11 @@ import os
 import re
 from typing import Any
 
-MODEL = os.getenv("ICP_JUDGE_MODEL", "claude-opus-4-8")
+# Calificar = clasificación (tier A/B/C/D + por qué corto). Haiku 4.5 lo hace bien y
+# sale ~5x más barato que Opus ($1/$5 vs $5/$25 por 1M tokens). Es la operación de
+# mayor volumen (corre sobre TODA la lista), así que acá es donde más se ahorra.
+# Configurable: ICP_QUALIFY_MODEL=claude-opus-4-8 para volver a Opus.
+QUALIFY_MODEL = os.getenv("ICP_QUALIFY_MODEL", "claude-haiku-4-5")
 
 
 def _domain(url: str) -> str:
@@ -223,7 +227,7 @@ def _system(rubric: str, value_prop: str, context: str = "", lang: str = "es") -
 def qualify_lead(lead: dict[str, Any], rubric: str, value_prop: str, client: Any,
                  context: str = "", lang: str = "es") -> dict[str, Any]:
     resp = client.messages.create(
-        model=MODEL, max_tokens=400, system=_system(rubric, value_prop, context, lang),
+        model=QUALIFY_MODEL, max_tokens=400, system=_system(rubric, value_prop, context, lang),
         messages=[{"role": "user", "content": json.dumps(lead, ensure_ascii=False)}],
         output_config={"format": {"type": "json_schema", "schema": _SCHEMA}},
     )
@@ -269,7 +273,7 @@ def qualify_batch(batch: list[dict[str, Any]], rubric: str, value_prop: str, cli
     user = ("Calificá TODOS estos leads. Devolvé exactamente un resultado por cada uno, "
             "con su mismo 'index'.\n\n" + json.dumps(items, ensure_ascii=False))
     resp = client.messages.create(
-        model=MODEL,
+        model=QUALIFY_MODEL,
         max_tokens=max(600, 120 * len(batch)),
         system=[{"type": "text", "text": _system(rubric, value_prop, context, lang),
                  "cache_control": {"type": "ephemeral"}}],
