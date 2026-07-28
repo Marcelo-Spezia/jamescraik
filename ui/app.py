@@ -20,6 +20,7 @@ for _p in (_ROOT / "src", _ROOT / "ui"):
 
 import streamlit as st  # noqa: E402
 
+import activity as ms_activity  # noqa: E402
 import campaigns  # noqa: E402
 import chat_builder  # noqa: E402
 import context as ms_context  # noqa: E402
@@ -52,8 +53,10 @@ TIER_COLOR = {"A": "#16a34a", "B": "#2563eb", "C": "#d97706", "D": "#9ca3af"}
 _BASE_LEAD_KEYS = {"tier", "name", "title", "company", "domain", "size", "industry",
                    "location", "email", "linkedin", "reason",
                    # campos del pipeline (no son insights de enrichment)
-                   "id", "status", "message", "notes", "campaign_slug",
+                   "id", "status", "message", "notes", "activity", "campaign_slug",
                    "campaign_name", "updated_at"}
+# Estados en los que el lead ya aceptó la conexión → tiene sentido traer su actividad.
+_CONNECTED_STATUSES = {"accepted", "message_ready", "sent", "replied"}
 
 
 def _lang() -> str:
@@ -478,6 +481,32 @@ def _pipeline_card(lead: dict, store, camps: list[dict], context: str, lang: str
             with st.expander(L("insights_expander")):
                 for k, v in ins:
                     st.markdown(f"**{_signal_label(k)}:** {v}")
+
+        # Actividad de LinkedIn (Fase 2) — solo sobre leads que aceptaron la conexión.
+        if cur in _CONNECTED_STATUSES:
+            act = lead.get("activity") or {}
+            if isinstance(act, dict) and act.get("summary"):
+                with st.expander(L("activity_label"), expanded=True):
+                    st.caption(act["summary"])
+            if st.button(L("fetch_activity"), key=f"act_{lid}"):
+                src = ms_activity.get_source()
+                lk = lead.get("linkedin") or ""
+                if getattr(src, "mode", "sync") == "async":
+                    # Clay: disparamos el pedido; el resultado vuelve por clay-webhook.
+                    try:
+                        sent = src.request_activity(lid, lk)
+                    except Exception as exc:  # noqa: BLE001
+                        sent = False
+                        st.error(f"{exc}")
+                    st.info(L("activity_requested") if sent else L("activity_none"))
+                else:
+                    with st.spinner(L("activity_spinner")):
+                        got = src.fetch_activity(lk)
+                    if got:
+                        store.update_fields(lid, {"activity": got})
+                        st.rerun()
+                    else:
+                        st.info(L("activity_none"))
 
         label = L("regen_message") if lead.get("message") else L("gen_message")
         if st.button(label, key=f"gen_{lid}", disabled=not HAS_CLAUDE):

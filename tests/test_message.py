@@ -50,6 +50,16 @@ def test_generate_message_uses_lead_insights_context_and_lang():
     assert "Lemon" in user
 
 
+def test_generate_message_uses_linkedin_activity_as_hook():
+    client = _FakeClient("Hola Maxi,")
+    lead = {"name": "Maxi", "company": "Lemon",
+            "activity": {"summary": "Posteó sobre su ronda Serie B esta semana."}}
+    message.generate_message(lead, client=client, lang="es")
+    user = client.calls[0]["messages"][0]["content"]
+    assert "Serie B esta semana" in user          # la actividad viaja al prompt
+    assert "HOOK" in user                          # marcada como hook principal
+
+
 def test_generate_message_english_directive():
     client = _FakeClient("Hi Maxi,")
     message.generate_message({"name": "Maxi"}, client=client, lang="en")

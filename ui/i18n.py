@@ -79,6 +79,19 @@ T: dict[str, dict[str, str]] = {
                        "en": "No saved leads match these filters."},
     "pipeline_count": {"es": "{n} lead(s)", "en": "{n} lead(s)"},
     "lead_status": {"es": "Estado", "en": "Status"},
+    "fetch_activity": {"es": "Traer actividad de LinkedIn", "en": "Fetch LinkedIn activity"},
+    "activity_spinner": {"es": "Trayendo actividad…", "en": "Fetching activity…"},
+    "activity_label": {"es": "Actividad reciente en LinkedIn", "en": "Recent LinkedIn activity"},
+    "activity_requested": {
+        "es": "Actividad solicitada a Clay. Va a aparecer acá cuando termine el "
+              "enriquecimiento (llega por webhook, no es instantáneo).",
+        "en": "Activity requested from Clay. It'll show up here once enrichment finishes "
+              "(it arrives via webhook, not instantly)."},
+    "activity_none": {
+        "es": "Sin proveedor de actividad configurado (Fase 2). Conectá Clay u otro para "
+              "traer posteos/reacciones. (Tip: `ICP_ACTIVITY_DEMO=1` muestra un ejemplo.)",
+        "en": "No activity provider configured (Phase 2). Connect Clay or another to fetch "
+              "posts/reactions. (Tip: `ICP_ACTIVITY_DEMO=1` shows a sample.)"},
     "gen_message": {"es": "Generar mensaje", "en": "Generate message"},
     "regen_message": {"es": "Regenerar", "en": "Regenerate"},
     "gen_message_spinner": {"es": "Escribiendo el mensaje…", "en": "Writing the message…"},

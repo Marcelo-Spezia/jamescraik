@@ -54,9 +54,14 @@ def generate_message(lead: dict[str, Any], value_prop: str = "", context: str = 
         client = anthropic.Anthropic()
     info = {k: lead.get(k, "") for k in _LEAD_FIELDS if lead.get(k)}
     insights = {k: lead[k] for k in _INSIGHT_KEYS if lead.get(k)}
+    # Actividad de LinkedIn (Fase 2): si está, es el mejor hook — algo reciente y real.
+    act = lead.get("activity") or {}
+    act_summary = act.get("summary") if isinstance(act, dict) else None
     user = ("Datos del lead:\n" + json.dumps(info, ensure_ascii=False)
             + ("\n\nInsights del enrichment (usalos como munición):\n"
                + json.dumps(insights, ensure_ascii=False) if insights else "")
+            + ("\n\nActividad reciente en LinkedIn (usala como HOOK principal si es "
+               "relevante y específica):\n" + act_summary if act_summary else "")
             + "\n\nEscribí el borrador del primer mensaje.")
     resp = client.messages.create(
         model=MODEL, max_tokens=600, system=_system(value_prop, context, lang),
