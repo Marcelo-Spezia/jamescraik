@@ -639,17 +639,31 @@ def render_pipeline() -> None:
             _pipeline_card(lead, store, camps, context, lang)
         return
 
-    # Board + panel de detalle del lead seleccionado.
-    _render_board(leads, store)
+    # El board necesita ancho: ensanchamos el contenedor SOLO en esta vista
+    # (inyectando el estilo únicamente acá; las demás vistas siguen centradas).
+    st.markdown(
+        "<style>section.main .block-container,"
+        "div[data-testid='stMainBlockContainer']{max-width:1600px !important;}</style>",
+        unsafe_allow_html=True)
+
+    # Panel de detalle ARRIBA del board: al 'Abrir' un lead se ve de inmediato.
     sel_id = st.session_state.get("pipeline_selected")
     sel_lead = next((ld for ld in leads if ld["id"] == sel_id), None) if sel_id else None
-    st.divider()
-    if sel_lead:
-        _pipeline_card(sel_lead, store, camps, context, lang)
-    else:
+    if sel_id and not sel_lead:
         # el seleccionado ya no está en el filtro actual (cambió la campaña) → limpiar.
         st.session_state.pop("pipeline_selected", None)
+    if sel_lead:
+        hcol, ccol = st.columns([4, 1])
+        hcol.subheader(L("board_detail_title"))
+        if ccol.button(L("board_close"), key="close_detail", use_container_width=True):
+            st.session_state.pop("pipeline_selected", None)
+            st.rerun()
+        _pipeline_card(sel_lead, store, camps, context, lang)
+        st.divider()
+    else:
         st.caption(L("board_detail_hint"))
+
+    _render_board(leads, store)
 
 
 # ==========================================================================

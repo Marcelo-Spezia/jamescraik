@@ -83,7 +83,9 @@ T: dict[str, dict[str, str]] = {
     "pipeline_view_board": {"es": "Board", "en": "Board"},
     "pipeline_view_list": {"es": "Lista", "en": "List"},
     "board_move": {"es": "Mover", "en": "Move"},
-    "board_open": {"es": "Abrir detalle", "en": "Open detail"},
+    "board_open": {"es": "Abrir", "en": "Open"},
+    "board_close": {"es": "Cerrar detalle", "en": "Close detail"},
+    "board_detail_title": {"es": "Detalle del lead", "en": "Lead detail"},
     "board_discarded": {"es": "Descartados ({n})", "en": "Discarded ({n})"},
     "board_detail_hint": {"es": "Elegí “Abrir detalle” en una tarjeta para trabajar el lead "
                                 "(mensaje, actividad, notas).",
