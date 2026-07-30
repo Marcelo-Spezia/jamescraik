@@ -17,6 +17,14 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const ALLOWED = ["qualified", "connection_sent", "accepted",
                  "message_ready", "sent", "replied", "discarded"];
 
+// Orden del funnel: el webhook SOLO AVANZA (nunca retrocede). Así un evento fuera de
+// orden o duplicado (p.ej. un "connection_sent" tardío) no pisa un estado más avanzado.
+const FUNNEL = ["qualified", "connection_sent", "accepted", "message_ready", "sent", "replied"];
+function statusesBelow(target: string): string[] {
+  const r = FUNNEL.indexOf(target);
+  return r <= 0 ? [] : FUNNEL.slice(0, r);
+}
+
 // Espejo EXACTO de norm_linkedin() en ui/leads_store.py (para que matchee lo guardado).
 function normLinkedin(raw: string): string | null {
   let s = (raw || "").trim().toLowerCase();
@@ -69,7 +77,12 @@ Deno.serve(async (req: Request) => {
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
-  let q = supabase.from("leads").update({ status }).eq("linkedin_url", norm);
+  // Solo-avanza: actualiza únicamente leads cuyo estado actual esté por debajo del destino.
+  const below = statusesBelow(status);
+  if (below.length === 0) {
+    return json({ ok: true, linkedin: norm, status, matched: 0, note: "sin transición válida" });
+  }
+  let q = supabase.from("leads").update({ status }).eq("linkedin_url", norm).in("status", below);
   const slug = url.searchParams.get("campaign_slug");
   if (slug) q = q.eq("campaign_slug", slug);
   const { data, error } = await q.select("id");

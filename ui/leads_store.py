@@ -84,6 +84,39 @@ def row_to_lead(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# Orden del funnel: contamos "el lead llegó AL MENOS a esta etapa". 'discarded' queda afuera.
+_FUNNEL_ORDER = ["qualified", "connection_sent", "accepted", "message_ready", "sent", "replied"]
+_RANK = {s: i for i, s in enumerate(_FUNNEL_ORDER)}
+
+
+def funnel_counts(leads: list[dict[str, Any]]) -> dict[str, int]:
+    """Cuenta del funnel a partir del estado actual de cada lead (etapa alcanzada)."""
+    active = [ld for ld in leads if ld.get("status") != "discarded"]
+
+    def reached(stage: str) -> int:
+        r = _RANK[stage]
+        return sum(1 for ld in active if _RANK.get(ld.get("status"), 0) >= r)
+
+    return {
+        "leads": len(active),
+        "connection_sent": reached("connection_sent"),
+        "accepted": reached("accepted"),
+        "sent": reached("sent"),
+        "replied": reached("replied"),
+    }
+
+
+def campaign_metrics(store: Any) -> list[dict[str, Any]]:
+    """Métricas de funnel por campaña, a partir de los leads guardados en el store."""
+    groups: dict[str, dict[str, Any]] = {}
+    for ld in store.list_leads():
+        slug = ld.get("campaign_slug") or "—"
+        g = groups.setdefault(slug, {"name": ld.get("campaign_name") or slug, "_leads": []})
+        g["_leads"].append(ld)
+    return [{"slug": s, "name": g["name"], **funnel_counts(g["_leads"])}
+            for s, g in groups.items()]
+
+
 def _distinct_campaigns(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
     """Campañas distintas presentes en las filas → [{slug, name}], en orden de aparición."""
     seen: dict[str, str] = {}

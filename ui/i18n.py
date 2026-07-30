@@ -31,6 +31,7 @@ T: dict[str, dict[str, str]] = {
     "nav_qualify": {"es": "Calificar", "en": "Qualify"},
     "nav_chat": {"es": "Definir campaña", "en": "Define campaign"},
     "nav_pipeline": {"es": "Pipeline", "en": "Pipeline"},
+    "nav_metrics": {"es": "Métricas", "en": "Metrics"},
     "nav_context": {"es": "Contexto", "en": "Context"},
     "nav_group_flow": {"es": "FLUJO", "en": "WORKFLOW"},
     "nav_group_setup": {"es": "CONFIGURACIÓN", "en": "SETUP"},
@@ -99,6 +100,31 @@ T: dict[str, dict[str, str]] = {
     "save_message": {"es": "Guardar mensaje", "en": "Save message"},
     "message_saved": {"es": "Mensaje guardado.", "en": "Message saved."},
     "copy_hint": {"es": "Copialo y pegalo en Expandi:", "en": "Copy it and paste it into Expandi:"},
+
+    # --- vista Métricas (funnel por campaña) ---
+    "metrics_title": {"es": "Métricas", "en": "Metrics"},
+    "metrics_caption": {
+        "es": "Funnel por campaña. Conexiones, aceptadas, mensajes y respuestas salen del "
+              "pipeline; reuniones y oportunidades, de HubSpot. Entrá a una campaña en el "
+              "Pipeline para el seguimiento lead por lead.",
+        "en": "Funnel per campaign. Connections, accepted, messages and replies come from the "
+              "pipeline; meetings and opportunities from HubSpot. Open a campaign in the "
+              "Pipeline for lead-by-lead tracking."},
+    "metrics_empty": {"es": "Todavía no hay leads guardados en el pipeline.",
+                      "en": "No leads saved in the pipeline yet."},
+    "m_campaign": {"es": "Campaña", "en": "Campaign"},
+    "m_leads": {"es": "Leads", "en": "Leads"},
+    "m_sent": {"es": "Conex. enviadas", "en": "Conn. sent"},
+    "m_accepted": {"es": "Conex. aceptadas", "en": "Conn. accepted"},
+    "m_accept_rate": {"es": "% aceptación", "en": "Accept. %"},
+    "m_messages": {"es": "Mensajes", "en": "Messages"},
+    "m_replies": {"es": "Respuestas", "en": "Replies"},
+    "m_meetings": {"es": "Reuniones", "en": "Meetings"},
+    "m_opportunities": {"es": "Oportunidades", "en": "Opportunities"},
+    "m_hubspot_hint": {"es": "Reuniones y Oportunidades vienen de HubSpot (pendiente de conectar).",
+                       "en": "Meetings and Opportunities come from HubSpot (not connected yet)."},
+    "m_open_label": {"es": "Abrir una campaña en el Pipeline", "en": "Open a campaign in the Pipeline"},
+    "m_open_btn": {"es": "Abrir en Pipeline", "en": "Open in Pipeline"},
 
     # --- estados del pipeline ---
     "status_qualified": {"es": "Calificado", "en": "Qualified"},

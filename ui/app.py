@@ -25,6 +25,7 @@ import campaigns  # noqa: E402
 import chat_builder  # noqa: E402
 import context as ms_context  # noqa: E402
 import enrich  # noqa: E402
+import hubspot as ms_hubspot  # noqa: E402
 import i18n  # noqa: E402
 import leads_store  # noqa: E402
 import message as msg_gen  # noqa: E402
@@ -540,9 +541,16 @@ def render_pipeline() -> None:
         st.error(f"Error: {exc}")
         return
 
+    options = [L("pipeline_all")] + list(slug_by_name)
+    # Preselección al venir desde Métricas ("Abrir en Pipeline").
+    pre = st.session_state.pop("pipeline_slug", None)
+    idx = 0
+    if pre:
+        pre_name = next((n for n, s in slug_by_name.items() if s == pre), None)
+        if pre_name in options:
+            idx = options.index(pre_name)
     fcol, scol = st.columns(2)
-    camp_choice = fcol.selectbox(L("pipeline_campaign"),
-                                 [L("pipeline_all")] + list(slug_by_name))
+    camp_choice = fcol.selectbox(L("pipeline_campaign"), options, index=idx)
     slug = None if camp_choice == L("pipeline_all") else slug_by_name[camp_choice]
     keys = leads_store.STATUSES
     labels = {k: L(f"status_{k}") for k in keys}
@@ -561,6 +569,50 @@ def render_pipeline() -> None:
     context = ms_context.load_context()
     for lead in leads:
         _pipeline_card(lead, store, camps, context, lang)
+
+
+# ==========================================================================
+# Vista: Métricas (funnel por campaña)
+# ==========================================================================
+def render_metrics() -> None:
+    st.title(L("metrics_title"))
+    st.caption(L("metrics_caption"))
+    store = leads_store.get_store()
+    try:
+        rows = leads_store.campaign_metrics(store)
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Error: {exc}")
+        return
+    if not rows:
+        st.info(L("metrics_empty"))
+        return
+
+    hs = ms_hubspot.get_source()
+    table = []
+    for r in rows:
+        hm = hs.metrics(r["slug"]) or {}
+        rate = f'{round(100 * r["accepted"] / r["connection_sent"])}%' if r["connection_sent"] else "—"
+        table.append({
+            L("m_campaign"): r["name"],
+            L("m_leads"): r["leads"],
+            L("m_sent"): r["connection_sent"],
+            L("m_accepted"): r["accepted"],
+            L("m_accept_rate"): rate,
+            L("m_messages"): r["sent"],
+            L("m_replies"): r["replied"],
+            L("m_meetings"): hm.get("meetings", "—"),
+            L("m_opportunities"): hm.get("opportunities", "—"),
+        })
+    st.dataframe(table, use_container_width=True, hide_index=True)
+    st.caption(L("m_hubspot_hint"))
+
+    # Entrar a una campaña en el Pipeline para el seguimiento lead por lead.
+    by_name = {r["name"]: r["slug"] for r in rows}
+    sel = st.selectbox(L("m_open_label"), list(by_name))
+    if st.button(L("m_open_btn")):
+        st.session_state["pipeline_slug"] = by_name[sel]
+        st.session_state["view"] = "pipeline"
+        st.rerun()
 
 
 # ==========================================================================
@@ -609,6 +661,7 @@ with st.sidebar:
     _nav("chat", "nav_chat", current)
     _nav("qualify", "nav_qualify", current)
     _nav("pipeline", "nav_pipeline", current)
+    _nav("metrics", "nav_metrics", current)
 
     # Segmento 2 — configuración (zona más estática).
     st.divider()
@@ -625,6 +678,8 @@ elif view == "chat":
     render_chat()
 elif view == "pipeline":
     render_pipeline()
+elif view == "metrics":
+    render_metrics()
 elif view == "context":
     render_context()
 else:

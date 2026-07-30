@@ -61,6 +61,30 @@ def test_list_lead_campaigns_from_stored_leads():
     assert by_slug == {"atlanta-tech-week": "Atlanta Tech Week", "cfos-fintech": "CFOs fintech"}
 
 
+def test_funnel_counts_are_cumulative_by_stage():
+    leads = [
+        {"status": "qualified"}, {"status": "connection_sent"}, {"status": "accepted"},
+        {"status": "sent"}, {"status": "replied"}, {"status": "discarded"},
+    ]
+    c = ls.funnel_counts(leads)
+    assert c["leads"] == 5                       # discarded queda afuera
+    assert c["connection_sent"] == 4             # todos menos el 'qualified'
+    assert c["accepted"] == 3                     # accepted, sent, replied
+    assert c["sent"] == 2                         # sent, replied
+    assert c["replied"] == 1
+
+
+def test_campaign_metrics_groups_by_campaign():
+    store = ls.InMemoryLeadStore()
+    store.upsert_leads([{"name": "A", "linkedin": "in/a"}, {"name": "B", "linkedin": "in/b"}],
+                       "camp-1", "Campaña 1")
+    store.upsert_leads([{"name": "C", "linkedin": "in/c"}], "camp-2", "Campaña 2")
+    store.set_status_by_linkedin("in/a", "accepted")
+    m = {row["slug"]: row for row in ls.campaign_metrics(store)}
+    assert m["camp-1"]["leads"] == 2 and m["camp-1"]["accepted"] == 1
+    assert m["camp-2"]["leads"] == 1 and m["camp-2"]["accepted"] == 0
+
+
 def test_set_status_by_linkedin_matches_webhook():
     store = ls.InMemoryLeadStore()
     store.upsert_leads([{"name": "A", "linkedin": "https://linkedin.com/in/a"}], "camp")
