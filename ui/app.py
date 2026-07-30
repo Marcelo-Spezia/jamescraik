@@ -527,6 +527,65 @@ def _pipeline_card(lead: dict, store, camps: list[dict], context: str, lang: str
             st.code(edited, language=None)
 
 
+def _board_card(lead: dict, store) -> None:
+    """Tarjeta compacta del board: tier + nombre + empresa, mover de estado, abrir detalle."""
+    lid = lead["id"]
+    color = TIER_COLOR.get(lead.get("tier"), "#9ca3af")
+    keys = leads_store.STATUSES
+    labels = [L(f"status_{k}") for k in keys]
+    cur = lead.get("status", "qualified")
+    cur = cur if cur in keys else "qualified"
+    selected = st.session_state.get("pipeline_selected") == lid
+    with st.container(border=True):
+        st.markdown(
+            f"<span style='background:{color};color:#fff;border-radius:6px;padding:0 6px;"
+            f"font-weight:800;font-size:0.8em'>{lead.get('tier') or '—'}</span> "
+            f"<b>{lead.get('name') or '—'}</b>", unsafe_allow_html=True)
+        sub = " · ".join(x for x in (lead.get("title"), lead.get("company")) if x)
+        if sub:
+            st.caption(sub)
+        with st.popover(L("board_move"), use_container_width=True):
+            new_label = st.radio(L("lead_status"), labels, index=keys.index(cur),
+                                 key=f"mv_{lid}")
+            new_key = keys[labels.index(new_label)]
+            if new_key != cur:
+                store.update_fields(lid, {"status": new_key})
+                st.rerun()
+        btn = "primary" if selected else "secondary"
+        if st.button(L("board_open"), key=f"open_{lid}", use_container_width=True, type=btn):
+            st.session_state["pipeline_selected"] = None if selected else lid
+            st.rerun()
+
+
+def _render_board(leads: list[dict], store) -> None:
+    """Board tipo kanban: una columna por etapa del funnel + descartados aparte."""
+    order = [k for k in leads_store.STATUSES if k != "discarded"]
+    by_status: dict[str, list[dict]] = {k: [] for k in order}
+    discarded: list[dict] = []
+    for ld in leads:
+        s = ld.get("status", "qualified")
+        if s == "discarded":
+            discarded.append(ld)
+        else:
+            by_status.get(s, by_status["qualified"]).append(ld)
+
+    cols = st.columns(len(order))
+    for col, s in zip(cols, order):
+        with col:
+            st.markdown(
+                f"<div style='font-weight:800;font-size:0.82em;text-transform:uppercase;"
+                f"letter-spacing:.03em'>{L(f'status_{s}')}</div>"
+                f"<div style='color:#9ca3af;font-size:0.8em;margin-bottom:.4em'>"
+                f"{len(by_status[s])}</div>", unsafe_allow_html=True)
+            for ld in by_status[s]:
+                _board_card(ld, store)
+
+    if discarded:
+        with st.expander(L("board_discarded", n=len(discarded))):
+            for ld in discarded:
+                _board_card(ld, store)
+
+
 def render_pipeline() -> None:
     lang = _lang()
     st.title(L("pipeline_title"))
@@ -549,13 +608,21 @@ def render_pipeline() -> None:
         pre_name = next((n for n, s in slug_by_name.items() if s == pre), None)
         if pre_name in options:
             idx = options.index(pre_name)
-    fcol, scol = st.columns(2)
+    fcol, vcol = st.columns([2, 1])
     camp_choice = fcol.selectbox(L("pipeline_campaign"), options, index=idx)
     slug = None if camp_choice == L("pipeline_all") else slug_by_name[camp_choice]
+    view = vcol.radio(L("pipeline_view"), [L("pipeline_view_board"), L("pipeline_view_list")],
+                      horizontal=True)
+    is_board = view == L("pipeline_view_board")
+    context = ms_context.load_context()
+
     keys = leads_store.STATUSES
     labels = {k: L(f"status_{k}") for k in keys}
-    picked = scol.multiselect(L("pipeline_status_filter"), [labels[k] for k in keys])
-    picked_keys = [k for k in keys if labels[k] in picked] or None
+    # El filtro por estado solo aplica a la Lista; el Board ya muestra todos los estados.
+    picked_keys = None
+    if not is_board:
+        picked = st.multiselect(L("pipeline_status_filter"), [labels[k] for k in keys])
+        picked_keys = [k for k in keys if labels[k] in picked] or None
 
     try:
         leads = store.list_leads(campaign_slug=slug, statuses=picked_keys)
@@ -566,9 +633,23 @@ def render_pipeline() -> None:
         st.info(L("pipeline_empty"))
         return
     st.caption(L("pipeline_count", n=len(leads)))
-    context = ms_context.load_context()
-    for lead in leads:
-        _pipeline_card(lead, store, camps, context, lang)
+
+    if not is_board:
+        for lead in leads:
+            _pipeline_card(lead, store, camps, context, lang)
+        return
+
+    # Board + panel de detalle del lead seleccionado.
+    _render_board(leads, store)
+    sel_id = st.session_state.get("pipeline_selected")
+    sel_lead = next((ld for ld in leads if ld["id"] == sel_id), None) if sel_id else None
+    st.divider()
+    if sel_lead:
+        _pipeline_card(sel_lead, store, camps, context, lang)
+    else:
+        # el seleccionado ya no está en el filtro actual (cambió la campaña) → limpiar.
+        st.session_state.pop("pipeline_selected", None)
+        st.caption(L("board_detail_hint"))
 
 
 # ==========================================================================

@@ -79,6 +79,17 @@ T: dict[str, dict[str, str]] = {
     "pipeline_empty": {"es": "No hay leads guardados con esos filtros.",
                        "en": "No saved leads match these filters."},
     "pipeline_count": {"es": "{n} lead(s)", "en": "{n} lead(s)"},
+    "pipeline_view": {"es": "Vista", "en": "View"},
+    "pipeline_view_board": {"es": "Board", "en": "Board"},
+    "pipeline_view_list": {"es": "Lista", "en": "List"},
+    "board_move": {"es": "Mover", "en": "Move"},
+    "board_open": {"es": "Abrir detalle", "en": "Open detail"},
+    "board_discarded": {"es": "Descartados ({n})", "en": "Discarded ({n})"},
+    "board_detail_hint": {"es": "Elegí “Abrir detalle” en una tarjeta para trabajar el lead "
+                                "(mensaje, actividad, notas).",
+                          "en": "Pick “Open detail” on a card to work the lead "
+                                "(message, activity, notes)."},
+    "board_col_count": {"es": "{n}", "en": "{n}"},
     "lead_status": {"es": "Estado", "en": "Status"},
     "fetch_activity": {"es": "Traer actividad de LinkedIn", "en": "Fetch LinkedIn activity"},
     "activity_spinner": {"es": "Trayendo actividad…", "en": "Fetching activity…"},
