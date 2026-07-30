@@ -50,6 +50,17 @@ def test_list_filters_by_status_and_row_to_lead_flattens():
     assert store.list_leads("camp", statuses=["sent"]) == []
 
 
+def test_list_lead_campaigns_from_stored_leads():
+    store = ls.InMemoryLeadStore()
+    store.upsert_leads([{"name": "A", "linkedin": "in/a"}], "atlanta-tech-week",
+                       "Atlanta Tech Week")
+    store.upsert_leads([{"name": "B", "linkedin": "in/b"}], "cfos-fintech", "CFOs fintech")
+    camps = store.list_lead_campaigns()
+    by_slug = {c["slug"]: c["name"] for c in camps}
+    # el filtro del pipeline sale de los leads guardados, no de los archivos de campaña
+    assert by_slug == {"atlanta-tech-week": "Atlanta Tech Week", "cfos-fintech": "CFOs fintech"}
+
+
 def test_set_status_by_linkedin_matches_webhook():
     store = ls.InMemoryLeadStore()
     store.upsert_leads([{"name": "A", "linkedin": "https://linkedin.com/in/a"}], "camp")

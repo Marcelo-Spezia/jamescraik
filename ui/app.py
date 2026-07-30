@@ -531,8 +531,14 @@ def render_pipeline() -> None:
     st.title(L("pipeline_title"))
     st.caption(L("pipeline_caption"))
     store = leads_store.get_store()
-    camps = campaigns.list_campaigns()
-    slug_by_name = {c["name"]: c["slug"] for c in camps}
+    camps = campaigns.list_campaigns()  # archivos de campaña (para la propuesta de valor del mensaje)
+    # El filtro se arma con las campañas que REALMENTE tienen leads en el pipeline
+    # (Supabase), no con los archivos de campaña — así aparecen aunque el archivo no exista.
+    try:
+        slug_by_name = {c["name"]: c["slug"] for c in store.list_lead_campaigns()}
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Error: {exc}")
+        return
 
     fcol, scol = st.columns(2)
     camp_choice = fcol.selectbox(L("pipeline_campaign"),

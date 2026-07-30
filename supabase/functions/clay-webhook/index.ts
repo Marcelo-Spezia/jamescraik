@@ -56,10 +56,21 @@ Deno.serve(async (req: Request) => {
   }
 
   // 3) Armar el objeto de actividad (posteos recientes).
-  const posts = Array.isArray(body.posts) ? body.posts : [];
+  // `posts` puede venir como lista (["...","..."]) o como un texto (una línea por posteo).
+  let posts: string[] = [];
+  if (Array.isArray(body.posts)) {
+    posts = body.posts.map((p) => String(p).trim()).filter(Boolean);
+  } else if (typeof body.posts === "string" && body.posts.trim()) {
+    posts = body.posts.split("\n").map((s) => s.trim()).filter(Boolean);
+  }
+  // `summary` opcional: si Clay no lo manda, lo armamos con los primeros posteos.
+  let summary = (body.summary ?? "") as string;
+  if (!summary && posts.length) {
+    summary = "Posteos recientes: " + posts.slice(0, 3).join(" · ");
+  }
   const activity = {
-    summary: (body.summary ?? "") as string,
-    items: posts.map((p) => ({ type: "post", text: String(p) })),
+    summary,
+    items: posts.map((p) => ({ type: "post", text: p })),
     source: "clay",
     fetched_at: new Date().toISOString(),
   };

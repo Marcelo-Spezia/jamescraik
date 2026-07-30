@@ -84,6 +84,16 @@ def row_to_lead(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _distinct_campaigns(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Campañas distintas presentes en las filas → [{slug, name}], en orden de aparición."""
+    seen: dict[str, str] = {}
+    for r in rows:
+        slug = r.get("campaign_slug")
+        if slug and slug not in seen:
+            seen[slug] = r.get("campaign_name") or slug
+    return [{"slug": s, "name": n} for s, n in seen.items()]
+
+
 # ---------------------------------------------------------------------------
 # Stub en memoria (tests / dev sin credenciales)
 # ---------------------------------------------------------------------------
@@ -116,6 +126,9 @@ class InMemoryLeadStore:
                 if (campaign_slug is None or r["campaign_slug"] == campaign_slug)
                 and (statuses is None or r["status"] in statuses)]
         return [row_to_lead(r) for r in rows]
+
+    def list_lead_campaigns(self) -> list[dict[str, str]]:
+        return _distinct_campaigns(self._rows)
 
     def update_fields(self, lead_id: str, fields: dict[str, Any]) -> None:
         for r in self._rows:
@@ -179,6 +192,10 @@ class SupabaseLeadStore:
             q = q.in_("status", statuses)
         res = q.order("updated_at", desc=True).execute()
         return [row_to_lead(r) for r in res.data]
+
+    def list_lead_campaigns(self) -> list[dict[str, str]]:
+        res = self.c.table("leads").select("campaign_slug,campaign_name").execute()
+        return _distinct_campaigns(res.data)
 
     def update_fields(self, lead_id: str, fields: dict[str, Any]) -> None:
         self.c.table("leads").update(fields).eq("id", lead_id).execute()
