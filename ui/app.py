@@ -673,8 +673,20 @@ def render_metrics() -> None:
     st.title(L("metrics_title"))
     st.caption(L("metrics_caption"))
     store = leads_store.get_store()
+
+    # HubSpot detrás del adapter: reuniones + oportunidades por campaña (o "—" sin token).
+    hs = ms_hubspot.get_source()
+    connected = getattr(hs, "configured", False)
+    conv = None
+    if connected:
+        try:
+            conv = hs.conversions()
+        except Exception as exc:  # noqa: BLE001
+            st.warning(f"HubSpot: {exc}")
+            connected = False
+
     try:
-        rows = leads_store.campaign_metrics(store)
+        rows = leads_store.campaign_metrics(store, conversions=conv)
     except Exception as exc:  # noqa: BLE001
         st.error(f"Error: {exc}")
         return
@@ -682,10 +694,8 @@ def render_metrics() -> None:
         st.info(L("metrics_empty"))
         return
 
-    hs = ms_hubspot.get_source()
     table = []
     for r in rows:
-        hm = hs.metrics(r["slug"]) or {}
         rate = f'{round(100 * r["accepted"] / r["connection_sent"])}%' if r["connection_sent"] else "—"
         table.append({
             L("m_campaign"): r["name"],
@@ -695,11 +705,11 @@ def render_metrics() -> None:
             L("m_accept_rate"): rate,
             L("m_messages"): r["sent"],
             L("m_replies"): r["replied"],
-            L("m_meetings"): hm.get("meetings", "—"),
-            L("m_opportunities"): hm.get("opportunities", "—"),
+            L("m_meetings"): r.get("meetings", 0) if connected else "—",
+            L("m_opportunities"): r.get("opportunities", 0) if connected else "—",
         })
     st.dataframe(table, use_container_width=True, hide_index=True)
-    st.caption(L("m_hubspot_hint"))
+    st.caption(L("m_hubspot_hint_ok") if connected else L("m_hubspot_hint"))
 
     # Entrar a una campaña en el Pipeline para el seguimiento lead por lead.
     by_name = {r["name"]: r["slug"] for r in rows}

@@ -85,6 +85,28 @@ def test_campaign_metrics_groups_by_campaign():
     assert m["camp-2"]["leads"] == 1 and m["camp-2"]["accepted"] == 0
 
 
+def test_campaign_metrics_with_hubspot_conversions():
+    store = ls.InMemoryLeadStore()
+    store.upsert_leads([{"name": "A", "linkedin": "https://linkedin.com/in/a"},
+                        {"name": "B", "linkedin": "https://linkedin.com/in/b",
+                         "email": "b@acme.com"}], "camp-1", "Campaña 1")
+    conv = {
+        "by_linkedin": {"linkedin.com/in/a": {"meeting": True, "deals": 1}},
+        "by_email": {"b@acme.com": {"meeting": True, "deals": 0}},
+    }
+    m = {row["slug"]: row for row in ls.campaign_metrics(store, conversions=conv)}
+    # A matchea por LinkedIn (reunión + deal); B por email (solo reunión)
+    assert m["camp-1"]["meetings"] == 2
+    assert m["camp-1"]["opportunities"] == 1
+
+
+def test_campaign_metrics_without_conversions_has_no_hubspot_keys():
+    store = ls.InMemoryLeadStore()
+    store.upsert_leads([{"name": "A", "linkedin": "in/a"}], "camp-1", "Campaña 1")
+    row = ls.campaign_metrics(store)[0]
+    assert "meetings" not in row and "opportunities" not in row
+
+
 def test_set_status_by_linkedin_matches_webhook():
     store = ls.InMemoryLeadStore()
     store.upsert_leads([{"name": "A", "linkedin": "https://linkedin.com/in/a"}], "camp")

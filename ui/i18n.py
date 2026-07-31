@@ -136,6 +136,9 @@ T: dict[str, dict[str, str]] = {
     "m_opportunities": {"es": "Oportunidades", "en": "Opportunities"},
     "m_hubspot_hint": {"es": "Reuniones y Oportunidades vienen de HubSpot (pendiente de conectar).",
                        "en": "Meetings and Opportunities come from HubSpot (not connected yet)."},
+    "m_hubspot_hint_ok": {
+        "es": "Reuniones y Oportunidades desde HubSpot (match por LinkedIn URL o email del lead).",
+        "en": "Meetings and Opportunities from HubSpot (matched by lead LinkedIn URL or email)."},
     "m_open_label": {"es": "Abrir una campaña en el Pipeline", "en": "Open a campaign in the Pipeline"},
     "m_open_btn": {"es": "Abrir en Pipeline", "en": "Open in Pipeline"},
 

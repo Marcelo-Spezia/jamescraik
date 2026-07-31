@@ -106,15 +106,45 @@ def funnel_counts(leads: list[dict[str, Any]]) -> dict[str, int]:
     }
 
 
-def campaign_metrics(store: Any) -> list[dict[str, Any]]:
-    """Métricas de funnel por campaña, a partir de los leads guardados en el store."""
+def _hubspot_counts(leads: list[dict[str, Any]], conversions: dict[str, Any]) -> dict[str, int]:
+    """Cuenta reuniones/oportunidades de HubSpot para un grupo de leads.
+
+    `conversions` = {"by_linkedin": {url: {meeting,deals}}, "by_email": {...}} (ver hubspot.py).
+    Match por LinkedIn URL (primario) o email (fallback); un lead cuenta a lo sumo una vez.
+    """
+    by_l = conversions.get("by_linkedin", {})
+    by_e = conversions.get("by_email", {})
+    meetings = opportunities = 0
+    for ld in leads:
+        lk = norm_linkedin(ld.get("linkedin") or "")
+        em = (ld.get("email") or "").strip().lower()
+        rec = (by_l.get(lk) if lk else None) or (by_e.get(em) if em else None)
+        if not rec:
+            continue
+        if rec.get("meeting"):
+            meetings += 1
+        if rec.get("deals", 0) > 0:
+            opportunities += 1
+    return {"meetings": meetings, "opportunities": opportunities}
+
+
+def campaign_metrics(store: Any, conversions: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Métricas de funnel por campaña, a partir de los leads guardados en el store.
+
+    Si se pasa `conversions` (de un HubSpotSource), agrega meetings/opportunities por campaña.
+    """
     groups: dict[str, dict[str, Any]] = {}
     for ld in store.list_leads():
         slug = ld.get("campaign_slug") or "—"
         g = groups.setdefault(slug, {"name": ld.get("campaign_name") or slug, "_leads": []})
         g["_leads"].append(ld)
-    return [{"slug": s, "name": g["name"], **funnel_counts(g["_leads"])}
-            for s, g in groups.items()]
+    out = []
+    for s, g in groups.items():
+        row = {"slug": s, "name": g["name"], **funnel_counts(g["_leads"])}
+        if conversions is not None:
+            row.update(_hubspot_counts(g["_leads"], conversions))
+        out.append(row)
+    return out
 
 
 def _distinct_campaigns(rows: list[dict[str, Any]]) -> list[dict[str, str]]:
