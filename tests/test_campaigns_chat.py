@@ -9,8 +9,15 @@ import chat_builder
 
 
 # --- campaigns ---
-def test_save_list_load_campaign(tmp_path, monkeypatch):
+def _force_files(monkeypatch, tmp_path):
+    # sin credenciales de Supabase → backend archivo (determinístico, no depende del shell)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_KEY", raising=False)
     monkeypatch.setattr(campaigns, "CAMPAIGNS_DIR", tmp_path / "campaigns")
+
+
+def test_save_list_load_campaign(tmp_path, monkeypatch):
+    _force_files(monkeypatch, tmp_path)
     slug = campaigns.save_campaign({
         "name": "CFOs fintech AR",
         "sales_nav_filters": ["Geo: Argentina", "Title: CFO"],
@@ -25,7 +32,7 @@ def test_save_list_load_campaign(tmp_path, monkeypatch):
 
 
 def test_save_campaign_updates_same_slug(tmp_path, monkeypatch):
-    monkeypatch.setattr(campaigns, "CAMPAIGNS_DIR", tmp_path / "campaigns")
+    _force_files(monkeypatch, tmp_path)
     campaigns.save_campaign({"name": "X", "rubric": "v1"})
     campaigns.save_campaign({"name": "X", "rubric": "v2"})
     lst = campaigns.list_campaigns()
@@ -33,7 +40,7 @@ def test_save_campaign_updates_same_slug(tmp_path, monkeypatch):
 
 
 def test_delete_campaign(tmp_path, monkeypatch):
-    monkeypatch.setattr(campaigns, "CAMPAIGNS_DIR", tmp_path / "campaigns")
+    _force_files(monkeypatch, tmp_path)
     campaigns.save_campaign({"name": "Borrar esta", "rubric": "x"})
     assert len(campaigns.list_campaigns()) == 1
     assert campaigns.delete_campaign("borrar-esta") is True

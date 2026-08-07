@@ -10,6 +10,16 @@ from streamlit.testing.v1 import AppTest
 APP = "ui/app.py"
 
 
+def _isolate(monkeypatch) -> None:
+    """Fuerza el backend de archivo (no Supabase) para que estos tests no peguen a la red.
+
+    La app hace setdefault desde .env; seteando las vars a "" (falsy) ganamos al setdefault
+    y _use_supabase() da False.
+    """
+    monkeypatch.setenv("SUPABASE_URL", "")
+    monkeypatch.setenv("SUPABASE_SERVICE_KEY", "")
+
+
 def _has_password_input(at) -> bool:
     return any("Contraseña" in (ti.label or "") for ti in at.text_input)
 
@@ -33,6 +43,7 @@ def test_gate_unlocks_with_correct_password(monkeypatch):
 
 def test_no_gate_when_password_unset(monkeypatch):
     monkeypatch.delenv("APP_PASSWORD", raising=False)
+    _isolate(monkeypatch)
     at = AppTest.from_file(APP)
     at.run()
     assert not _has_password_input(at)
@@ -41,6 +52,7 @@ def test_no_gate_when_password_unset(monkeypatch):
 
 def test_home_is_default_view(monkeypatch):
     monkeypatch.delenv("APP_PASSWORD", raising=False)
+    _isolate(monkeypatch)
     at = AppTest.from_file(APP)
     at.run()
     assert at.session_state["view"] == "home"          # abre en Home

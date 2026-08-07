@@ -11,6 +11,8 @@ import qualify
 
 # --- persistencia ---
 def test_save_and_load_context(tmp_path, monkeypatch):
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_KEY", raising=False)
     monkeypatch.setattr(ms_context, "CONTEXT_FILE", tmp_path / "context" / "ms.md")
     assert ms_context.has_saved_context() is False
     ms_context.save_context("# MS\nDesarrollo de software.")
@@ -19,6 +21,8 @@ def test_save_and_load_context(tmp_path, monkeypatch):
 
 
 def test_load_seeds_from_source(tmp_path, monkeypatch):
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_KEY", raising=False)
     monkeypatch.setattr(ms_context, "CONTEXT_FILE", tmp_path / "ms.md")  # no existe
     seed = tmp_path / "seed.md"
     seed.write_text("contexto semilla", encoding="utf-8")

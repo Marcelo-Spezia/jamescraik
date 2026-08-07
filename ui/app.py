@@ -166,7 +166,11 @@ def render_home() -> None:
         st.session_state.pop("chat", None)
         st.session_state["view"] = "chat"
         st.rerun()
-    camps = campaigns.list_campaigns()
+    try:
+        camps = campaigns.list_campaigns()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Error: {exc}")
+        return
     if not camps:
         st.info(L("home_empty"))
         return
@@ -726,12 +730,21 @@ def render_metrics() -> None:
 def render_context() -> None:
     st.title(L("context_title"))
     st.caption(L("context_caption"))
-    if not ms_context.has_saved_context():
+    try:
+        saved = ms_context.has_saved_context()
+        current = ms_context.load_context()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Error: {exc}")
+        return
+    if not saved:
         st.info(L("context_seeded"))
-    txt = st.text_area(L("context_label"), value=ms_context.load_context(),
-                       height=480, key="ms_ctx")
+    txt = st.text_area(L("context_label"), value=current, height=480, key="ms_ctx")
     if st.button(L("save_context"), type="primary"):
-        ms_context.save_context(txt)
+        try:
+            ms_context.save_context(txt)
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Error: {exc}")
+            return
         st.success(L("context_saved"))
 
 
