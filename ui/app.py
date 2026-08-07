@@ -65,6 +65,14 @@ def _lang() -> str:
     return st.session_state.get("lang", "es")
 
 
+def _msg_lang() -> str:
+    """Idioma del MENSAJE de outreach, independiente del idioma de la UI.
+
+    El equipo usa la UI en español, pero los prospectos suelen ser en inglés → default 'en'.
+    """
+    return st.session_state.get("msg_lang", "en")
+
+
 def L(key: str, **kw) -> str:  # noqa: N802 - atajo corto y muy usado en la UI
     """Atajo de traducción con el idioma actual."""
     return i18n.t(key, _lang(), **kw)
@@ -493,7 +501,7 @@ def _render_exa(exa: dict) -> None:
         st.markdown(line)
 
 
-def _pipeline_card(lead: dict, store, camps: list[dict], context: str, lang: str) -> None:
+def _pipeline_card(lead: dict, store, camps: list[dict], context: str) -> None:
     lid = lead["id"]
     color = TIER_COLOR.get(lead.get("tier"), "#9ca3af")
     keys = leads_store.STATUSES
@@ -587,7 +595,7 @@ def _pipeline_card(lead: dict, store, camps: list[dict], context: str, lang: str
         if st.button(label, key=f"gen_{lid}", disabled=not HAS_CLAUDE):
             with st.spinner(L("gen_message_spinner")):
                 m = msg_gen.generate_message(lead, value_prop=_value_prop_for(lead, camps),
-                                             context=context, lang=lang)
+                                             context=context, lang=_msg_lang())
             store.update_fields(lid, {"message": m, "status": "message_ready"})
             st.rerun()
 
@@ -661,7 +669,6 @@ def _render_board(leads: list[dict], store) -> None:
 
 
 def render_pipeline() -> None:
-    lang = _lang()
     st.title(L("pipeline_title"))
     st.caption(L("pipeline_caption"))
     store = leads_store.get_store()
@@ -682,12 +689,18 @@ def render_pipeline() -> None:
         pre_name = next((n for n, s in slug_by_name.items() if s == pre), None)
         if pre_name in options:
             idx = options.index(pre_name)
-    fcol, vcol = st.columns([2, 1])
+    fcol, vcol, mcol = st.columns([2, 1, 1])
     camp_choice = fcol.selectbox(L("pipeline_campaign"), options, index=idx)
     slug = None if camp_choice == L("pipeline_all") else slug_by_name[camp_choice]
     view = vcol.radio(L("pipeline_view"), [L("pipeline_view_board"), L("pipeline_view_list")],
                       horizontal=True)
     is_board = view == L("pipeline_view_board")
+    # Idioma del MENSAJE, independiente de la UI (default inglés: los prospectos suelen serlo).
+    mlangs = {"English": "en", "Español": "es"}
+    cur_ml = _msg_lang()
+    ml_idx = list(mlangs.values()).index(cur_ml) if cur_ml in mlangs.values() else 0
+    st.session_state["msg_lang"] = mlangs[mcol.selectbox(L("msg_lang_label"),
+                                                          list(mlangs), index=ml_idx)]
     context = ms_context.load_context()
 
     keys = leads_store.STATUSES
@@ -710,7 +723,7 @@ def render_pipeline() -> None:
 
     if not is_board:
         for lead in leads:
-            _pipeline_card(lead, store, camps, context, lang)
+            _pipeline_card(lead, store, camps, context)
         return
 
     # El board necesita ancho: ensanchamos el contenedor SOLO en esta vista
@@ -732,7 +745,7 @@ def render_pipeline() -> None:
         if ccol.button(L("board_close"), key="close_detail", use_container_width=True):
             st.session_state.pop("pipeline_selected", None)
             st.rerun()
-        _pipeline_card(sel_lead, store, camps, context, lang)
+        _pipeline_card(sel_lead, store, camps, context)
         st.divider()
     else:
         st.caption(L("board_detail_hint"))
