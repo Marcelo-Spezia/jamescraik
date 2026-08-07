@@ -17,3 +17,6 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+
+# Benchmark de enrichment (experimento descartable) — payloads crudos con datos reales
+out/
