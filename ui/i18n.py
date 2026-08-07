@@ -114,6 +114,33 @@ T: dict[str, dict[str, str]] = {
     "message_saved": {"es": "Mensaje guardado.", "en": "Message saved."},
     "copy_hint": {"es": "Copialo y pegalo en Expandi:", "en": "Copy it and paste it into Expandi:"},
 
+    # --- enrichment web con Exa (company + persona) ---
+    "exa_label": {"es": "Datos web (Exa): empresa + persona",
+                  "en": "Web data (Exa): company + person"},
+    "exa_fetch": {"es": "Enriquecer con Exa (web)", "en": "Enrich with Exa (web)"},
+    "exa_refresh": {"es": "Volver a enriquecer (Exa)", "en": "Re-enrich (Exa)"},
+    "exa_update": {"es": "Actualizar Exa", "en": "Refresh Exa"},
+    "exa_pending": {"es": "Exa: enriquecimiento en curso — tocá “Actualizar Exa”.",
+                    "en": "Exa: enrichment in progress — hit “Refresh Exa”."},
+    "exa_still_running": {"es": "Todavía corriendo. Probá de nuevo en unos segundos.",
+                          "en": "Still running. Try again in a few seconds."},
+    "exa_failed": {"es": "Exa: el enriquecimiento falló. Probá de nuevo.",
+                   "en": "Exa: enrichment failed. Try again."},
+    "exa_none": {"es": "Exa no encontró datos con fuente para este lead.",
+                 "en": "Exa found no sourced data for this lead."},
+    "exa_no_anchor": {"es": "Falta dominio o LinkedIn para anclar la búsqueda de Exa.",
+                      "en": "Missing domain or LinkedIn to anchor the Exa search."},
+    "exa_requested": {"es": "Enriquecimiento solicitado a Exa (no es instantáneo).",
+                      "en": "Enrichment requested from Exa (not instant)."},
+    "exa_source": {"es": "fuente", "en": "source"},
+    "exa_f_funding": {"es": "Inversión", "en": "Funding"},
+    "exa_f_hiring": {"es": "Contrataciones tech", "en": "Tech hiring"},
+    "exa_f_geo": {"es": "Expansión geográfica", "en": "Geo expansion"},
+    "exa_f_public_activity": {"es": "Actividad pública", "en": "Public activity"},
+    "exa_f_content": {"es": "Contenido propio", "en": "Authored content"},
+    "exa_f_career_moves": {"es": "Movimientos de carrera", "en": "Career moves"},
+    "exa_f_press": {"es": "Prensa / menciones", "en": "Press / mentions"},
+
     # --- vista Métricas (funnel por campaña) ---
     "metrics_title": {"es": "Métricas", "en": "Metrics"},
     "metrics_caption": {

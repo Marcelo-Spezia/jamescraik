@@ -60,6 +60,23 @@ def test_generate_message_uses_linkedin_activity_as_hook():
     assert "HOOK" in user                          # marcada como hook principal
 
 
+def test_generate_message_uses_exa_facts():
+    client = _FakeClient("Hola Ana,")
+    lead = {"name": "Ana", "company": "Acme", "exa": {"company": {
+        "funding": {"stage": "Series F", "amount_usd": 750000000, "date": "2026-06-04",
+                    "src": "https://pr/x"},
+        "hiring": {"v": "Contrata backend", "src": "https://acme/jobs"}, "geo": None},
+        "person": {"public_activity": None, "content": None,
+                   "career_moves": {"v": "Ascendió a CTO en 2025", "src": "https://x"},
+                   "press": None}}}
+    message.generate_message(lead, client=client, lang="es")
+    user = client.calls[0]["messages"][0]["content"]
+    assert "Series F" in user and "Contrata backend" in user   # facts de Exa como munición
+    assert "Ascendió a CTO en 2025" in user                    # dato de persona
+    assert "https://pr/x" not in user                          # sin URLs de fuente en el prompt
+    assert "NO repitas" in user                                # instrucción de dedupe vs Clay
+
+
 def test_generate_message_english_directive():
     client = _FakeClient("Hi Maxi,")
     message.generate_message({"name": "Maxi"}, client=client, lang="en")

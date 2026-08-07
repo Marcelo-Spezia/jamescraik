@@ -25,6 +25,7 @@ import campaigns  # noqa: E402
 import chat_builder  # noqa: E402
 import context as ms_context  # noqa: E402
 import enrich  # noqa: E402
+import exa_enrich as ms_exa  # noqa: E402
 import hubspot as ms_hubspot  # noqa: E402
 import i18n  # noqa: E402
 import leads_store  # noqa: E402
@@ -459,6 +460,39 @@ def _value_prop_for(lead: dict, camps: list[dict]) -> str:
     return camp.get("value_prop", "") if camp else ""
 
 
+def _exa_facts(exa: dict) -> list[tuple[str, str, str]]:
+    """Facts no-null de Exa → [(clave_label, valor, source_url)] (company + persona)."""
+    comp = (exa or {}).get("company") or {}
+    pers = (exa or {}).get("person") or {}
+    out: list[tuple[str, str, str]] = []
+    f = comp.get("funding")
+    if f:
+        parts = [str(x) for x in (f.get("stage"), f.get("amount_usd"), f.get("date")) if x]
+        if parts:
+            out.append(("exa_f_funding", " · ".join(parts), f.get("src") or ""))
+    for key, lk in (("hiring", "exa_f_hiring"), ("geo", "exa_f_geo")):
+        node = comp.get(key)
+        if node and node.get("v"):
+            out.append((lk, node["v"], node.get("src") or ""))
+    for key in ("public_activity", "content", "career_moves", "press"):
+        node = pers.get(key)
+        if node and node.get("v"):
+            out.append((f"exa_f_{key}", node["v"], node.get("src") or ""))
+    return out
+
+
+def _render_exa(exa: dict) -> None:
+    facts = _exa_facts(exa)
+    if not facts:
+        st.caption(L("exa_none"))
+        return
+    for lk, val, src in facts:
+        line = f"**{L(lk)}:** {val}"
+        if src:
+            line += f"  ([{L('exa_source')}]({src}))"
+        st.markdown(line)
+
+
 def _pipeline_card(lead: dict, store, camps: list[dict], context: str, lang: str) -> None:
     lid = lead["id"]
     color = TIER_COLOR.get(lead.get("tier"), "#9ca3af")
@@ -512,6 +546,42 @@ def _pipeline_card(lead: dict, store, camps: list[dict], context: str, lang: str
                         st.rerun()
                     else:
                         st.info(L("activity_none"))
+
+        # Enrichment web con Exa (company + persona) — complementa a Clay (async fire→poll).
+        exa = lead.get("exa") if isinstance(lead.get("exa"), dict) else None
+        exa_status = exa.get("status") if exa else None
+        exa_src = ms_exa.get_source()
+        if getattr(exa_src, "configured", False):
+            if exa_status == "completed":
+                with st.expander(L("exa_label"), expanded=True):
+                    _render_exa(exa)
+            elif exa_status == "pending":
+                st.caption(L("exa_pending"))
+            elif exa_status == "failed":
+                st.caption(L("exa_failed"))
+            fire_label = L("exa_refresh") if exa_status == "completed" else L("exa_fetch")
+            if st.button(fire_label, key=f"exafire_{lid}"):
+                try:
+                    rid = exa_src.request_enrichment(lead)
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"{exc}")
+                else:
+                    if rid:
+                        store.update_fields(lid, {"exa": {"run_id": rid, "status": "pending"}})
+                        st.rerun()
+                    else:
+                        st.info(L("exa_no_anchor"))
+            if exa_status == "pending" and st.button(L("exa_update"), key=f"exapoll_{lid}"):
+                try:
+                    got = exa_src.poll(exa.get("run_id"))
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"{exc}")
+                else:
+                    if got:
+                        store.update_fields(lid, {"exa": got})
+                        st.rerun()
+                    else:
+                        st.info(L("exa_still_running"))
 
         label = L("regen_message") if lead.get("message") else L("gen_message")
         if st.button(label, key=f"gen_{lid}", disabled=not HAS_CLAUDE):

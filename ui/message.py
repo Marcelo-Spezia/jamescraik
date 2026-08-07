@@ -20,6 +20,32 @@ _INSIGHT_KEYS = ["hook", "value_prop_match", "business_momentum", "role_focus",
                  "tech_maturity", "funding", "growth", "maturity"]
 
 
+def _exa_ammo(lead: dict[str, Any]) -> dict[str, str]:
+    """Facts de Exa (company + persona) aplanados a {clave: valor} para el prompt.
+
+    Solo valores (sin URLs de fuente, que no van en el mensaje). Complementa a Clay:
+    Clay = posteos de LinkedIn (activity); Exa = presencia web más amplia.
+    """
+    exa = lead.get("exa") or {}
+    comp = exa.get("company") or {}
+    pers = exa.get("person") or {}
+    ammo: dict[str, str] = {}
+    f = comp.get("funding")
+    if f:
+        parts = [str(x) for x in (f.get("stage"), f.get("amount_usd"), f.get("date")) if x]
+        if parts:
+            ammo["company_funding"] = " · ".join(parts)
+    for src_key, out_key in (("hiring", "company_hiring"), ("geo", "company_geo")):
+        node = comp.get(src_key)
+        if node and node.get("v"):
+            ammo[out_key] = node["v"]
+    for k in ("public_activity", "content", "career_moves", "press"):
+        node = pers.get(k)
+        if node and node.get("v"):
+            ammo[f"person_{k}"] = node["v"]
+    return ammo
+
+
 def _lang_directive(lang: str) -> str:
     return ("Escribí el mensaje en español rioplatense (vos)." if lang == "es"
             else "Write the message in English (address them as 'you').")
@@ -57,11 +83,15 @@ def generate_message(lead: dict[str, Any], value_prop: str = "", context: str = 
     # Actividad de LinkedIn (Fase 2): si está, es el mejor hook — algo reciente y real.
     act = lead.get("activity") or {}
     act_summary = act.get("summary") if isinstance(act, dict) else None
+    exa_ammo = _exa_ammo(lead)
     user = ("Datos del lead:\n" + json.dumps(info, ensure_ascii=False)
             + ("\n\nInsights del enrichment (usalos como munición):\n"
                + json.dumps(insights, ensure_ascii=False) if insights else "")
             + ("\n\nActividad reciente en LinkedIn (usala como HOOK principal si es "
                "relevante y específica):\n" + act_summary if act_summary else "")
+            + ("\n\nDatos web verificados de Exa (company + persona, con fuente). Usalos como "
+               "munición grounded; NO repitas lo que ya aparece en la actividad de LinkedIn:\n"
+               + json.dumps(exa_ammo, ensure_ascii=False) if exa_ammo else "")
             + "\n\nEscribí el borrador del primer mensaje.")
     resp = client.messages.create(
         model=MODEL, max_tokens=600, system=_system(value_prop, context, lang),
