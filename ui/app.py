@@ -32,6 +32,8 @@ import leads_store  # noqa: E402
 import message as msg_gen  # noqa: E402
 import ms_ui  # noqa: E402
 import qualify  # noqa: E402
+import reply as ms_reply  # noqa: E402
+import senders as ms_senders  # noqa: E402
 
 try:
     for _k, _v in st.secrets.items():
@@ -613,6 +615,53 @@ def _pipeline_card(lead: dict, store, camps: list[dict], context: str) -> None:
             st.caption(L("copy_hint"))
             st.code(edited, language=None)
 
+        # Responder al lead que contestó (proceso de Nicolás): voz del SDR + gate de fit.
+        if cur == "replied":
+            _reply_flow(lead, store, context)
+
+
+def _reply_flow(lead: dict, store, context: str) -> None:
+    """Genera la respuesta al lead en la voz de un SDR, con gate de fit. Guarda el hilo."""
+    lid = lead["id"]
+    st.divider()
+    st.markdown(f"**{L('reply_header')}**")
+    try:
+        senders_list = ms_senders.list_senders()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Error: {exc}")
+        return
+    by_label = {f"{s.get('name', '')} · {s.get('role', '')}": s for s in senders_list}
+    thread = lead.get("thread") if isinstance(lead.get("thread"), dict) else {}
+    sel = st.selectbox(L("reply_sender"), list(by_label), key=f"rsend_{lid}")
+    lead_reply = st.text_area(L("reply_lead_msg"), value=thread.get("lead_reply", ""),
+                              key=f"rmsg_{lid}", height=100)
+    can_gen = HAS_CLAUDE and bool(lead_reply.strip()) and bool(by_label)
+    if st.button(L("reply_generate"), key=f"rgen_{lid}", disabled=not can_gen):
+        with st.spinner(L("reply_spinner")):
+            out = ms_reply.generate_reply(
+                lead, by_label[sel], lead_reply, context=context,
+                first_message=lead.get("message") or "", lang=_msg_lang())
+        store.update_fields(lid, {"thread": {
+            "lead_reply": lead_reply, "sender_slug": by_label[sel].get("slug"),
+            "fit": out["fit"], "reason": out["reason"], "reply": out["reply"]}})
+        st.rerun()
+
+    # Resultado del último análisis (si ya se generó).
+    if thread.get("fit") is False:
+        st.warning(L("reply_no_fit"))
+        if thread.get("reason"):
+            st.caption(thread["reason"])
+        if st.button(L("reply_discard"), key=f"rdisc_{lid}"):
+            store.update_fields(lid, {"status": "discarded", "notes": thread.get("reason")})
+            st.rerun()
+    elif thread.get("reply"):
+        if thread.get("reason"):
+            st.caption(thread["reason"])
+        edited = st.text_area(L("reply_label"), value=thread["reply"],
+                              key=f"rtxt_{lid}", height=140)
+        st.caption(L("copy_hint"))
+        st.code(edited, language=None)
+
 
 def _board_card(lead: dict, store) -> None:
     """Tarjeta compacta del board: tier + nombre + empresa, mover de estado, abrir detalle."""
@@ -837,6 +886,52 @@ def render_context() -> None:
 
 
 # ==========================================================================
+# Vista: Remitentes (perfiles de SDR — la voz de cada uno)
+# ==========================================================================
+def _sender_form(s: dict, key: str) -> dict:
+    """Campos editables de un remitente; devuelve el dict con los valores del form."""
+    name = st.text_input(L("s_name"), value=s.get("name", ""), key=f"snm_{key}")
+    role = st.text_input(L("s_role"), value=s.get("role", ""), key=f"srl_{key}")
+    cred = st.text_area(L("s_cred"), value=s.get("credibility", ""), key=f"scr_{key}", height=80)
+    voice = st.text_area(L("s_voice"), value=s.get("voice", ""), key=f"svc_{key}", height=120)
+    st.caption(L("s_examples_hint"))
+    ex_txt = st.text_area(L("s_examples"), value="\n---\n".join(s.get("examples") or []),
+                          key=f"sex_{key}", height=140, label_visibility="collapsed")
+    examples = [e.strip() for e in ex_txt.split("---") if e.strip()]
+    return {"name": name, "role": role, "credibility": cred, "voice": voice,
+            "examples": examples}
+
+
+def render_senders() -> None:
+    st.title(L("senders_title"))
+    st.caption(L("senders_caption"))
+    try:
+        lst = ms_senders.list_senders()
+    except Exception as exc:  # noqa: BLE001
+        st.error(f"Error: {exc}")
+        return
+    for s in lst:
+        with st.expander(f"{s.get('name', '')} · {s.get('role', '')}"):
+            data = _sender_form(s, s["slug"])
+            c1, c2 = st.columns(2)
+            if c1.button(L("save"), key=f"ssv_{s['slug']}", type="primary"):
+                ms_senders.save_sender({**data, "slug": s["slug"],
+                                        "created_at": s.get("created_at")})
+                st.success(L("s_saved"))
+                st.rerun()
+            if c2.button(L("delete"), key=f"sdl_{s['slug']}"):
+                ms_senders.delete_sender(s["slug"])
+                st.rerun()
+    st.divider()
+    with st.expander(L("s_new")):
+        data = _sender_form({}, "new")
+        if st.button(L("s_create"), type="primary", disabled=not data["name"].strip()):
+            ms_senders.save_sender(data)
+            st.success(L("s_saved"))
+            st.rerun()
+
+
+# ==========================================================================
 # Router
 # ==========================================================================
 def _nav(view_key: str, label_key: str, current: str) -> None:
@@ -873,6 +968,7 @@ with st.sidebar:
     st.divider()
     st.caption(L("nav_group_setup"))
     _nav("context", "nav_context", current)
+    _nav("senders", "nav_senders", current)
 
     st.divider()
     st.caption(L("sidebar_footer"))
@@ -888,5 +984,7 @@ elif view == "metrics":
     render_metrics()
 elif view == "context":
     render_context()
+elif view == "senders":
+    render_senders()
 else:
     render_qualify()

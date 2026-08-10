@@ -23,7 +23,7 @@ STATUSES = ["qualified", "connection_sent", "accepted",
 _BASE_KEYS = {"id", "campaign_slug", "campaign_name", "name", "title", "company",
               "domain", "size", "industry", "location", "email", "linkedin",
               "linkedin_url", "tier", "reason", "status", "message", "notes",
-              "activity", "exa", "created_at", "updated_at"}
+              "activity", "exa", "thread", "created_at", "updated_at"}
 
 
 def norm_linkedin(url: str) -> str | None:
@@ -73,6 +73,7 @@ def row_to_lead(row: dict[str, Any]) -> dict[str, Any]:
         "notes": row.get("notes"),
         "activity": row.get("activity"),   # actividad de LinkedIn (Clay), jsonb
         "exa": row.get("exa"),             # enrichment web de company + persona (Exa), jsonb
+        "thread": row.get("thread"),       # hilo de conversación (respuesta del lead + reply)
         "campaign_slug": row.get("campaign_slug"),
         "campaign_name": row.get("campaign_name"),
         "name": row.get("name"), "title": row.get("title"), "company": row.get("company"),

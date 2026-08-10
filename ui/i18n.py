@@ -120,6 +120,38 @@ T: dict[str, dict[str, str]] = {
     "message_saved": {"es": "Mensaje guardado.", "en": "Message saved."},
     "copy_hint": {"es": "Copialo y pegalo en Expandi:", "en": "Copy it and paste it into Expandi:"},
 
+    # --- responder a un lead que contestó (voz del SDR + gate de fit) ---
+    "reply_header": {"es": "Responder al lead", "en": "Reply to the lead"},
+    "reply_sender": {"es": "Remitente (SDR)", "en": "Sender (SDR)"},
+    "reply_lead_msg": {"es": "Respuesta del lead (pegala acá)",
+                       "en": "Lead's reply (paste it here)"},
+    "reply_generate": {"es": "Generar respuesta", "en": "Generate reply"},
+    "reply_spinner": {"es": "Evaluando fit y escribiendo…", "en": "Assessing fit and writing…"},
+    "reply_no_fit": {"es": "El modelo no lo ve como buen fit — no generó respuesta.",
+                     "en": "The model doesn't see a good fit — no reply generated."},
+    "reply_discard": {"es": "Descartar lead", "en": "Discard lead"},
+    "reply_label": {"es": "Respuesta (editable)", "en": "Reply (editable)"},
+
+    # --- editor de remitentes (SDRs) ---
+    "nav_senders": {"es": "Remitentes", "en": "Senders"},
+    "senders_title": {"es": "Remitentes (SDRs)", "en": "Senders (SDRs)"},
+    "senders_caption": {
+        "es": "El perfil y la voz de cada SDR — se usan para escribir las respuestas en su tono.",
+        "en": "Each SDR's profile and voice — used to write replies in their tone."},
+    "s_name": {"es": "Nombre", "en": "Name"},
+    "s_role": {"es": "Rol", "en": "Role"},
+    "s_cred": {"es": "Base de credibilidad (clientes, sector)",
+               "en": "Credibility basis (clients, sector)"},
+    "s_voice": {"es": "Voz / cómo escribe", "en": "Voice / how they write"},
+    "s_examples": {"es": "Mensajes de ejemplo", "en": "Example messages"},
+    "s_examples_hint": {"es": "Mensajes de ejemplo (separá cada uno con una línea '---'):",
+                        "en": "Example messages (separate each with a '---' line):"},
+    "s_new": {"es": "Agregar remitente", "en": "Add sender"},
+    "s_create": {"es": "Crear remitente", "en": "Create sender"},
+    "s_saved": {"es": "Remitente guardado.", "en": "Sender saved."},
+    "save": {"es": "Guardar", "en": "Save"},
+    "delete": {"es": "Borrar", "en": "Delete"},
+
     # --- enrichment web con Exa (company + persona) ---
     "exa_label": {"es": "Datos web (Exa): empresa + persona",
                   "en": "Web data (Exa): company + person"},
