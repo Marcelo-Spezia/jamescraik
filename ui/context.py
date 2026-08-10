@@ -7,7 +7,8 @@ casos de éxito, aprendizajes y verticales foco. El agente lo inyecta en sus pro
 Persistencia DURABLE en Supabase cuando hay credenciales (tabla `app_context`, una fila
 key='making_sense'); si no, fallback a archivo local (context/making_sense.md). Motivo:
 en Streamlit Cloud el disco es efímero → el contexto editado se perdía en cada redeploy.
-Se siembra desde Project_Knowledge_Contexto.md si todavía no hay contexto guardado.
+Se siembra desde el contexto de ventas de MS (context/making_sense.md) si todavía no hay
+contexto guardado — NO desde la documentación del proyecto.
 """
 
 from __future__ import annotations
@@ -18,7 +19,9 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONTEXT_FILE = PROJECT_ROOT / "context" / "making_sense.md"
-SEED_SOURCE = PROJECT_ROOT / "Project_Knowledge_Contexto.md"
+# El seed ES el contexto de ventas de Making Sense (mismo archivo). En el deploy, con
+# Supabase vacío, se cae acá → hay que sembrar el KB de VENTAS, no los docs del proyecto.
+SEED_SOURCE = CONTEXT_FILE
 _TABLE = "app_context"
 _KEY = "making_sense"
 

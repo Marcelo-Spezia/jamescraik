@@ -463,9 +463,9 @@ def render_qualify() -> None:
 # ==========================================================================
 # Vista: Pipeline (leads guardados + estado + mensaje)
 # ==========================================================================
-def _value_prop_for(lead: dict, camps: list[dict]) -> str:
-    camp = next((c for c in camps if c["slug"] == lead.get("campaign_slug")), None)
-    return camp.get("value_prop", "") if camp else ""
+def _campaign_for(lead: dict, camps: list[dict]) -> dict | None:
+    """La definición de campaña del lead (para propuesta de valor + hipótesis del mensaje)."""
+    return next((c for c in camps if c["slug"] == lead.get("campaign_slug")), None)
 
 
 def _exa_facts(exa: dict) -> list[tuple[str, str, str]]:
@@ -591,11 +591,16 @@ def _pipeline_card(lead: dict, store, camps: list[dict], context: str) -> None:
                     else:
                         st.info(L("exa_still_running"))
 
+        camp = _campaign_for(lead, camps)
+        if not camp:
+            st.warning(L("msg_no_campaign"))   # sin definición → el mensaje sale genérico
         label = L("regen_message") if lead.get("message") else L("gen_message")
         if st.button(label, key=f"gen_{lid}", disabled=not HAS_CLAUDE):
             with st.spinner(L("gen_message_spinner")):
-                m = msg_gen.generate_message(lead, value_prop=_value_prop_for(lead, camps),
-                                             context=context, lang=_msg_lang())
+                m = msg_gen.generate_message(
+                    lead, value_prop=(camp or {}).get("value_prop", ""),
+                    hypothesis=(camp or {}).get("rubric", ""),
+                    context=context, lang=_msg_lang())
             store.update_fields(lid, {"message": m, "status": "message_ready"})
             st.rerun()
 

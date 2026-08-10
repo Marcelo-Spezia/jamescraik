@@ -107,6 +107,11 @@ T: dict[str, dict[str, str]] = {
         "en": "No activity provider configured (Phase 2). Connect Clay or another to fetch "
               "posts/reactions. (Tip: `ICP_ACTIVITY_DEMO=1` shows a sample.)"},
     "msg_lang_label": {"es": "Idioma del mensaje", "en": "Message language"},
+    "msg_no_campaign": {
+        "es": "Esta campaña no tiene definición guardada (propuesta de valor + hipótesis). "
+              "El mensaje va a salir genérico. Recreá la campaña en “Definir campaña”.",
+        "en": "This campaign has no saved definition (value prop + hypothesis). The message "
+              "will come out generic. Recreate it in “Define campaign”."},
     "gen_message": {"es": "Generar mensaje", "en": "Generate message"},
     "regen_message": {"es": "Regenerar", "en": "Regenerate"},
     "gen_message_spinner": {"es": "Escribiendo el mensaje…", "en": "Writing the message…"},

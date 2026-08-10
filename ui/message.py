@@ -51,30 +51,47 @@ def _lang_directive(lang: str) -> str:
             else "Write the message in English (address them as 'you').")
 
 
-def _system(value_prop: str, context: str = "", lang: str = "es") -> str:
-    vp = f"\n\nPropuesta de valor de Making Sense:\n{value_prop}" if value_prop else ""
-    ctx = (f"\n\nContexto de Making Sense (para groundear, no para copiar):\n{context}"
-           if context and context.strip() else "")
-    return (
+def _system(value_prop: str, context: str = "", lang: str = "es",
+            hypothesis: str = "") -> str:
+    """Arma el system en tres bloques etiquetados: Making Sense, esta campaña, y las reglas.
+
+    El mensaje se groundea en QUIÉN es Making Sense (context) + la TESIS de la campaña
+    (hipótesis + propuesta de valor). Sin esos bloques, el mensaje sale genérico.
+    """
+    rules = (
         "Sos parte del equipo de Making Sense y escribís el PRIMER mensaje de LinkedIn a un "
         "prospecto que YA aceptó la conexión. Objetivo: abrir conversación, NO vender ni "
         "pitchear.\n\n"
         "Reglas:\n"
         "- Breve: 2 a 4 oraciones (~400-600 caracteres). Cálido, humano y directo.\n"
         "- Personalizalo con el 'hook' y la situación del prospecto (su rol, su empresa, su "
-        "momento de negocio). Que se note que NO es un mensaje masivo.\n"
+        "momento de negocio), ANCLADO en la hipótesis de la campaña. Que no parezca masivo.\n"
         "- Conectá su contexto con lo que hace Making Sense de forma sutil (media frase), sin "
         "pitch agresivo ni lista de servicios.\n"
         "- Cerrá con una pregunta abierta o un CTA suave (ej. proponer una charla corta).\n"
         "- Primera persona plural (nosotros/Making Sense); tratá al prospecto de 'vos/tú'.\n"
-        "- Sin emoji. Sin asunto ni firma. NO inventes datos que no estén en la info del lead.\n"
-        f"{vp}{ctx}\n\n{_lang_directive(lang)}"
+        "- Sin emoji. Sin asunto ni firma. NO inventes datos que no estén en la info provista.\n"
+        "- Respetá el tono y las reglas del contexto de Making Sense (abajo)."
     )
+    ms = (f"\n\n## Making Sense (quiénes somos, propuesta de valor, tono — ground truth)\n{context}"
+          if context and context.strip() else "")
+    camp_parts = []
+    if hypothesis and hypothesis.strip():
+        camp_parts.append("Hipótesis / a quién apuntamos y por qué:\n" + hypothesis.strip())
+    if value_prop and value_prop.strip():
+        camp_parts.append("Propuesta de valor de esta campaña:\n" + value_prop.strip())
+    camp = ("\n\n## Esta campaña (la tesis del outreach)\n" + "\n\n".join(camp_parts)
+            if camp_parts else "")
+    return f"{rules}{ms}{camp}\n\n{_lang_directive(lang)}"
 
 
 def generate_message(lead: dict[str, Any], value_prop: str = "", context: str = "",
-                     client: Any | None = None, lang: str = "es") -> str:
-    """Genera un borrador de mensaje para un lead. Devuelve texto plano (editable)."""
+                     client: Any | None = None, lang: str = "es",
+                     hypothesis: str = "") -> str:
+    """Genera un borrador de mensaje para un lead. Devuelve texto plano (editable).
+
+    context = KB de ventas de Making Sense · value_prop + hypothesis = definición de la campaña.
+    """
     if client is None:
         import anthropic
         client = anthropic.Anthropic()
@@ -94,7 +111,8 @@ def generate_message(lead: dict[str, Any], value_prop: str = "", context: str = 
                + json.dumps(exa_ammo, ensure_ascii=False) if exa_ammo else "")
             + "\n\nEscribí el borrador del primer mensaje.")
     resp = client.messages.create(
-        model=MODEL, max_tokens=600, system=_system(value_prop, context, lang),
+        model=MODEL, max_tokens=600,
+        system=_system(value_prop, context, lang, hypothesis),
         messages=[{"role": "user", "content": user}],
     )
     return next((b.text for b in resp.content if b.type == "text"), "").strip()

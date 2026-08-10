@@ -60,6 +60,20 @@ def test_generate_message_uses_linkedin_activity_as_hook():
     assert "HOOK" in user                          # marcada como hook principal
 
 
+def test_generate_message_injects_campaign_hypothesis_and_ms_context():
+    client = _FakeClient("Hola,")
+    message.generate_message(
+        {"name": "Ana", "company": "Acme"}, value_prop="modernización de plataformas",
+        context="Making Sense: partner de Anthropic, nearshore.",
+        hypothesis="CTOs de portcos PE con mandato de IA sin equipo interno.",
+        client=client, lang="es")
+    system = client.calls[0]["system"]
+    assert "CTOs de portcos PE con mandato de IA" in system    # la HIPÓTESIS entra al prompt
+    assert "modernización de plataformas" in system            # value_prop de la campaña
+    assert "partner de Anthropic" in system                    # contexto de ventas de MS
+    assert "Esta campaña" in system and "Making Sense" in system  # bloques etiquetados
+
+
 def test_generate_message_uses_exa_facts():
     client = _FakeClient("Hola Ana,")
     lead = {"name": "Ana", "company": "Acme", "exa": {"company": {
