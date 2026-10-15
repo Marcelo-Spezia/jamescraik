@@ -15,8 +15,25 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// Clay a veces manda los valores envueltos en llaves de merge ({{...}}) o comillas.
+// Los sacamos antes de usarlos, si no Postgres rechaza el uuid ("invalid input syntax").
+function stripMerge(raw: string): string {
+  let s = (raw || "").trim();
+  if (s.startsWith("{{") && s.endsWith("}}")) s = s.slice(2, -2).trim();
+  s = s.replace(/^["']|["']$/g, "").trim();
+  return s;
+}
+
+// Extrae un uuid de donde sea (aunque venga con llaves/comillas alrededor). null si no hay.
+function cleanUuid(raw: string): string | null {
+  const m = stripMerge(raw).match(
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i,
+  );
+  return m ? m[0] : null;
+}
+
 function normLinkedin(raw: string): string | null {
-  let s = (raw || "").trim().toLowerCase();
+  let s = stripMerge(raw).toLowerCase();
   if (!s) return null;
   s = s.replace(/^https?:\/\//, "");
   if (s.startsWith("www.")) s = s.slice(4);
@@ -48,11 +65,11 @@ Deno.serve(async (req: Request) => {
     return json({ ok: false, error: "invalid json" }, 400);
   }
 
-  const leadId = (body.lead_id ?? body.leadId ?? "") as string;
+  const leadId = cleanUuid((body.lead_id ?? body.leadId ?? "") as string);
   const linkedin = (body.linkedin_url ?? body.linkedin ?? "") as string;
-  if (!leadId && !linkedin) {
+  if (!leadId && !normLinkedin(linkedin)) {
     console.log("clay webhook sin lead_id ni linkedin. Payload:", JSON.stringify(body).slice(0, 2000));
-    return json({ ok: false, reason: "falta lead_id o linkedin_url" }, 200);
+    return json({ ok: false, reason: "falta lead_id (uuid) o linkedin_url válido" }, 200);
   }
 
   // 3) Armar el objeto de actividad (posteos recientes).
